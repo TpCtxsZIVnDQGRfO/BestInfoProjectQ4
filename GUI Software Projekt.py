@@ -7,7 +7,7 @@
 from tkinter import *
 from tkinter import messagebox
 from tkinter.filedialog import askopenfilename, asksaveasfilename
-from allgemeine_Simulation import *
+from Zellulare_Automaten_Simulation import *
 from ast import literal_eval
 
 import numpy as np
