@@ -3,11 +3,10 @@
 
 # In[1]:
 
-
 from tkinter import *
 from tkinter import messagebox
 from tkinter.filedialog import askopenfilename, asksaveasfilename
-from Zellulare_Automaten_Simulation import *
+import Zellulare_Automaten_Simulation
 from ast import literal_eval
 
 import numpy as np
@@ -18,8 +17,8 @@ matplotlib.use("TkAgg")
 
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
+from matplotlib import pyplot as plt
 import matplotlib.animation as animation
-
 
 # In[2]:
 
@@ -44,8 +43,8 @@ fenster.config(bg='white')
 fenster.geometry("600x600")
 
 # To-Do-List
-- weiß werden der p0_coordinates_tf bzw. rot werden
-- Speicherung der p0_coordinates in schönem Format zum Wiederöffnen
+# - weiß werden der p0_coordinates_tf bzw. rot werden
+# - Speicherung der p0_coordinates in schönem Format zum Wiederöffnen
 # In[4]:
 
 
