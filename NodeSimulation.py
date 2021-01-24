@@ -47,19 +47,13 @@ class Simulation:
         self.KHWeg = 300 #Maxweg, den ein Patient zum KH auf sich nimmt
         self.bAbstand = self.KHDistance*0.75 #Radius des Kreises, in dem sich Patienten um das Krankenhaus aufstellen
 
-        newpath = 'pix\\'#leerer Ordner, in dem die einzelnen Frames gespeichert werden
-        if not os.path.exists(newpath): #Edgecase: löscht momentan noch Inhalt von Ordnern, die schon existieren und so heißen
-            os.makedirs(newpath)
-        else:
-            shutil.rmtree('pix\\')
-            os.makedirs(newpath)
-        
+
+
         for i in range(flowchart.shape[0]): #shape ist die Größe (-> [0] Länge in x-Richtung)
             for j in range(flowchart.shape[1]):
                 if flowchart[i,j] != 0:
                     self.flow.append([i,j,flowchart[i,j]*5/self.fps]) #Wahrscheinlichkeiten an Zeit und nicht an Frames/Zeitschritte gebunden
-        #print(self.flow)            
-
+        
     def addRandomNode(self,amount,state): #erstellt x neue Nodes an zufälligen Koordinaten
         for i in range(amount):
             check = False 
@@ -75,7 +69,7 @@ class Simulation:
                 id = self.nodes[-1].ID+1
             self.nodes.append(Knoten(id,k,state,[],None))
 
-    def addRandomKH(self,amount,maxKapa):
+    def addRandomKH(self,amount,maxKapa): #erstellt x neue Krankenhäuser an zufälligen Koordinaten
         w = self.KHWidth
         for i in range(amount):
             istDaPlatz = False 
@@ -103,7 +97,6 @@ class Simulation:
                         distance = self.distance(self.nodes[i],self.nodes[j+i])
                         for barrier in self.barriers:
                             if wegVersperrt == False:
-                                #print(j)
                                 k1 = sim.nodes[i].k
                                 k2 = sim.nodes[i+j].k
                                 b1 = barrier[0]
@@ -125,8 +118,7 @@ class Simulation:
         width = self.connecWidth 
         draw = ImageDraw.Draw(image)
         for link in self.links:
-            if True: #link[0].KHState == link[0].KHState == [1,0,0,0]:
-                draw.line((((link[0].k[0]+r)*dis[0], (link[0].k[1]+r)*dis[1]), ((link[1].k[0]+r)*dis[0], (link[1].k[1]+r)*dis[1])), fill=fill,width=width)
+            draw.line((((link[0].k[0]+r)*dis[0], (link[0].k[1]+r)*dis[1]), ((link[1].k[0]+r)*dis[0], (link[1].k[1]+r)*dis[1])), fill=fill,width=width)
         for node in self.nodes:
             if node.KH != None:
                 draw.line((((node.k[0]+r)*dis[0], (node.k[1]+r)*dis[1]), ((node.KH.k[0]+r)*dis[0], (node.KH.k[1]+r)*dis[1])), fill="purple",width=2*width)
@@ -170,7 +162,6 @@ class Simulation:
                 if node.state[i] == 1:
                     c = self.colours[i]
             draw.ellipse(((k[0]+r)*dis[0]-r, (k[1]+r)*dis[1]-r, (k[0]+r)*dis[0]+r, (k[1]+r)*dis[1]+r), fill = c, outline =c) #https://stackoverflow.com/questions/20747345/python-pil-draw-circle#20747513
-        #image = image.crop((0,0,round((self.canvas[0]+2*r)*dis[0]),round((self.canvas[1]+2*r)*dis[1])))
         return image
 
     def visualComplete(self): #erstellt das ganze Bild mit allen Teilen
@@ -312,7 +303,7 @@ class Knoten():
         self.moveVec = [math.cos(theta),math.sin(theta)] #erster Bewegungsvektor ist Randompunkt auf Einheitskreis
         self.modVec = [0,0] #der Modifizierungsvektor wird in run() bestimmt
         self.beugungsRate = 0
-        self.KH = None #Krankenhaus, an der die Node gerade hängt
+        self.KH = None #Krcptvankenhaus, an der die Node gerade hängt
         self.Idiot = False #Idioten gehen nicht zum Krankenhaus, wenn sie krank sind
         self.KHState = [1,0,0,0] #gesund, auf dem Weg zum KH, am KH, auf dem Weg nach Hause
         self.genesungsgrad = 0 # 1 bedeutet, dass der Patient gesund und immun ist
@@ -332,28 +323,20 @@ class KH():
     def __init__(self,Koordinaten,maxKapazität):
         self.k = Koordinaten
         self.kapa = maxKapazität #Anzahl der Plätze
-        #self.patients = [None] * self.kapa #Node-Array
         self.belegt = 0 #Anzahl der Patienten (auch, wenn sie noch unterwegs zum Krankenhaus sind)
 
 class Utility(): #allerlei nützliche Funktionen
 
     #braucht scheinbar keine __init__()
-        
-    def cptv(pathIn, pathOut, fps): #convert_pictures_to_video (nimmt alle Videos an gegebenem Pfad und hängt sie zum Video aneinander)
-        frame_array=[]
-        files= [f for f in os.listdir(pathIn)if isfile(join(pathIn,f))]
-        for i in range(len(files)):
-            filename=pathIn+files[i]
-            img=cv2.imread(filename)
-            height, width, layers = img.shape
-            size = (width,height)
 
-            frame_array.append(img)
-        out=cv2.VideoWriter(pathOut,cv2.VideoWriter_fourcc(*'DIVX'), fps,size)
-        for i in range(len(frame_array)):
-            out.write(frame_array[i]) #aus Youtubevideo
+    def cptv(frameArr,pathOut,fps):
+        height, width, layers = frameArr[0].shape
+        size = (width,height)
+        out=cv2.VideoWriter(pathOut,cv2.VideoWriter_fourcc(*'DIVX'),fps,size)
+        for i in range(len(frameArr)):
+             out.write(frameArr[i])
         out.release()
-
+        
     #Leider halt für GERADEN
     def line_intersection(line1, line2): #beides Zweierlisten von Tupeln
         xdiff = (line1[0][0] - line1[1][0], line2[0][0] - line2[1][0])
@@ -393,7 +376,6 @@ class Utility(): #allerlei nützliche Funktionen
         if (s_numer > denom) == denom_is_positive or (t_numer > denom) == denom_is_positive:
             return False # no collision
 
-
         return True #collision
 
     def coordDistance(a, b): #Abstand zweier Koordinaten
@@ -419,7 +401,7 @@ sim.addRandomKH(3,5)
 sim.maxDist = 50
 sim.movementRadius = 500
 
-sim.barrierColour = "red"
+sim.barrierColour = "red" 
 sim.barrierWidth = 2
 sim.connecColour = "white"
 sim.connecWidth = 1
@@ -429,14 +411,18 @@ sim.barriers.append([[800,100],[800,800]])
 for i in range(5):
     sim.nodes[i].state = [0,1,0] #die ersten fünf Nodes sind infiziert
 
-#anzeige = tqdm(total=sim.frames,position=0,leave=False)
+frameArr = []
 for i in range(sim.frames):
     sim.generate_connections()
-    sim.visualComplete().save("pix\\"+"0"*(5-len(str(i)))+str(i)+".jpeg", 'JPEG', ppcm=[100,100], quality=100)
+    frameArr.append(np.array(sim.visualComplete()))
     sim.run(1)
     print(i)
-    #anzeige.set_description("Loading...".format(i))
-    #anzeige.update(1)
+
     
-Utility.cptv("pix\\", "video.mp4", sim.fps)
+for pic in frameArr:
+    for i in range(len(pic)):
+        pic[i][:, [2, 0]] = pic[i][:, [0, 2]]
+
+Utility.cptv(frameArr,"video.mp4",sim.fps)
+
 print("Das Video wurde erstellt.")      #██████████████████████████████████████████████████████████ bestes Zeichen 
