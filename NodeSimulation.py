@@ -1,5 +1,5 @@
 import numpy as np
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import random
 import math
 from PIL import Image
@@ -7,14 +7,14 @@ from PIL import ImageDraw
 from PIL import ImageFont
 
 import cv2
-import glob
+#import glob
 import os
 
 from os.path import isfile, join
 
 import shutil
-from sympy import Point, Line, Segment
-from tqdm import tqdm
+#from sympy import Point, Line, Segment
+#from tqdm import tqdm
 
 class Simulation:
     
@@ -189,15 +189,14 @@ class Simulation:
             tempR = []
             if self.movementRadius != 0:
                 self.generate_connections()
-            #print("lololololol")
             for j in range(len(self.nodes)):
                 if self.nodes[j].state == [0,1,0]:
                     for k in range(len(self.nodes[j].connec)):
                         if self.nodes[j].connec[k][0].state == [1,0,0]:
-                            if random.random()<self.flow[0][2]:# and self.nodes[j].KHState != [0,0,1,0] and self.nodes[j].connec[k][0].KHState != [0,0,1,0]:
-                                tempI.append(self.nodes[j].connec[k][0])
+                            if random.random()<self.flow[0][2]:
+                                tempI.append(self.nodes[j].connec[k][0]) #Ansteckung
                         if random.random()<self.flow[1][2]:
-                            tempR.append(self.nodes[j])
+                            tempR.append(self.nodes[j]) #Genesung
             for j in tempI:
                 j.state = [0,1,0]
             for j in tempR:
@@ -206,7 +205,7 @@ class Simulation:
 #############
             #Bewegung
 #############
-            if self.movementRadius != 0:
+            if self.movementRadius != 0: #nur, wenn es überhaupt Bewegung gibt
                 for j in range(len(self.nodes)):
                     node = self.nodes[j]
 
@@ -215,12 +214,12 @@ class Simulation:
                         KHsMitPlatz = []
                         KHDistanzen = []
                         for kh in self.KH:
-                            if kh.belegt < kh.kapa and Utility.coordDistance(node.k,kh.k) <= self.KHWeg:
+                            if kh.belegt < kh.kapa and Utility.coordDistance(node.k,kh.k) <= self.KHWeg: #ist das Krankenhaus weder voll noch zu weit weg?
                                 KHsMitPlatz.append(kh)
                                 KHDistanzen.append(Utility.coordDistance(node.k,kh.k))
                         if KHsMitPlatz != []:
                             for i in range(len(KHsMitPlatz)):
-                                if KHDistanzen[i] == min(KHDistanzen):
+                                if KHDistanzen[i] == min(KHDistanzen): #nächstes Krankenhaus wird gewählt
                                     node.KH = KHsMitPlatz[i]
                                     node.KHState = [0,1,0,0]
                                     KHsMitPlatz[i].belegt += 1
@@ -235,13 +234,13 @@ class Simulation:
                         else: #wenn die Node beim nächsten Schritt im KH stände
                             vec = [vec[0]*(norm-self.bAbstand),vec[1]*(norm-self.bAbstand)]
                             node.KHState = [0,0,1,0]
-                        node.k = [node.k[0]+vec[0],node.k[1]+vec[1]]
+                            node.k = [node.k[0]+vec[0],node.k[1]+vec[1]]
 
                     #Behandlung am Krankenhaus
                     if node.KHState == [0,0,1,0]:
-                        if node.genesungsgrad < 1 and node.state != [0,0,1]:
+                        if node.genesungsgrad < 1 and node.state != [0,0,1]: #wenn der Patient noch nicht genesen ist
                             node.genesungsgrad += 1/(self.Behandlungsdauer*self.fps)
-                        else:
+                        else: #wenn doch
                             node.genesungsgrad = 0
                             node.state = [0,0,1]
                             node.KHState = [0,0,0,1]
@@ -260,10 +259,10 @@ class Simulation:
 
                     #Bewegung für Nicht-Krankenhausgänger
                     if node.KHState == [1,0,0,0]:
-                        inKH = False
+                        inKH = False #ob die Node in einem Krankenhausbereich ist
                         for kh in self.KH:
                             if Utility.coordDistance(node.k,kh.k) <= self.bAbstand:
-                                node.moveVec = [node.k[0]-kh.k[0],node.k[1]-kh.k[1]]
+                                node.moveVec = [node.k[0]-kh.k[0],node.k[1]-kh.k[1]] #die Bewegung ist dann gerade von Krankehaus weg
                                 inKH = True
                         norm = math.sqrt(node.moveVec[0]**2+node.moveVec[1]**2)
                         node.moveVec = [node.moveVec[0]/norm,node.moveVec[1]/norm] #Bewegungsvektor normieren
@@ -272,32 +271,32 @@ class Simulation:
                             node.modVec = [-node.moveVec[1],node.moveVec[0]] #Modifizierungsvektor steht senkrecht auf dem Bewegungsvektor
                         node.moveVec = [node.moveVec[0]+node.modVec[0]/20*node.beugungsRate,node.moveVec[1]+node.modVec[1]/20*node.beugungsRate]
                         fuCoords = [node.k[0]+node.moveVec[0]/10*self.speed,node.k[1]+node.moveVec[1]/10*self.speed] #die Koordinaten, an denen die Node als nächtes wäre
-                        wegVersperrt = False
+                        wegVersperrt = False #ob eine Barriere den Weg versperrt
                         for barrier in self.barriers:
                             k1 = node.k
                             k2 = fuCoords
                             b1 = barrier[0]
                             b2 = barrier[1]
-                            if Utility.do_they_intersect(k1, k2, b1, b2): #prüfen, ob die geplante Bewegungstrecke mit einer Barriere kollidiert
+                            if Utility.do_they_intersect(k1, k2, b1, b2): #prüfen, ob die geplante Bewegungsstrecke mit einer Barriere kollidiert
                                 wegVersperrt = True
-                        nichtZuWeitWeg = False
+                        nichtZuWeitWeg = False #nicht zu weit weg vom Startpunkt der Node
                         if self.movementRadius != None:
                             if Utility.coordDistance(fuCoords,node.startKoord) <= self.movementRadius:
                                 nichtZuWeitWeg = True
-                        KHimWeg = False
+                        KHimWeg = False #ob Krankenhausgelände betreten werden würde
                         for kh in self.KH:
                             if Utility.coordDistance(fuCoords,kh.k) <= self.bAbstand and not inKH:
                                 KHimWeg = True
                                 node.moveVec = [-node.moveVec[0],-node.moveVec[1]]
-                        nochImFeld = False
+                        nochImFeld = False #ob die Node nicht den Canvas verlassen würde
                         if 0 <= fuCoords[0] <= self.canvas[0] and 0 <= fuCoords[1] <= self.canvas[1]:
                             nochImFeld = True
                         else:
                             node.beugungsRate = 0
                         if nochImFeld and not wegVersperrt and nichtZuWeitWeg and not KHimWeg: 
-                            node.k = fuCoords #bewegen, wenn der Weg frei ist und nicht aus dem Bild raus führt (sonst stehen bleiben)
+                            node.k = fuCoords #bewegen
                         node.beugungsRate -= 1
-                        node.moveVec = [node.moveVec[0]+node.modVec[0]/20,node.moveVec[1]+node.modVec[1]/20] #die Krümmung wird geringer
+                        node.moveVec = [node.moveVec[0]+node.modVec[0]/20,node.moveVec[1]+node.modVec[1]/20] #die Krümmung wird immer geringer
 
                         
 class Knoten():
@@ -332,9 +331,9 @@ class KH():
 
     def __init__(self,Koordinaten,maxKapazität):
         self.k = Koordinaten
-        self.kapa = maxKapazität
-        self.patients = [None] * self.kapa #Node-Array
-        self.belegt = 0
+        self.kapa = maxKapazität #Anzahl der Plätze
+        #self.patients = [None] * self.kapa #Node-Array
+        self.belegt = 0 #Anzahl der Patienten (auch, wenn sie noch unterwegs zum Krankenhaus sind)
 
 class Utility(): #allerlei nützliche Funktionen
 
@@ -397,7 +396,7 @@ class Utility(): #allerlei nützliche Funktionen
 
         return True #collision
 
-    def coordDistance(a, b):
+    def coordDistance(a, b): #Abstand zweier Koordinaten
         return math.sqrt((a[0]-b[0])**2+(a[1]-b[1])**2)
             
     
@@ -430,10 +429,8 @@ sim.barriers.append([[800,100],[800,800]])
 for i in range(5):
     sim.nodes[i].state = [0,1,0] #die ersten fünf Nodes sind infiziert
 
-#frameArr = []
 #anzeige = tqdm(total=sim.frames,position=0,leave=False)
 for i in range(sim.frames):
-    #frameArr.append(sim.visualComplete())
     sim.generate_connections()
     sim.visualComplete().save("pix\\"+"0"*(5-len(str(i)))+str(i)+".jpeg", 'JPEG', ppcm=[100,100], quality=100)
     sim.run(1)
