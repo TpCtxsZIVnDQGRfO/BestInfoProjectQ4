@@ -34,8 +34,8 @@ class Simulation:
         self.frames = videoLength * fps #Anzahl der Frames
         self.coordList = [] #später benötigt, um Dopplung von Startkoordinaten zu vermeiden (ist das so wichtig?)
         self.barriers = [] #[[[Xstart1,Ystart1],[Xende1,Yende1]],[[Xstart2,Ystart2],[Xende2,Yende2]],...]
-        self.maxDist = 20
-        self.movementRadius = None
+        self.maxDist = 20 #maximale Entfernung, mit der zwei Nodes noch verbunden sind
+        self.movementRadius = None #Entfernung, die eine Node maximal zu ihren Startkoordinaten haben kann
         self.barrierColour = "red"
         self.barrierWidth = 2
         self.connecColour = "white"
@@ -419,10 +419,10 @@ for i in range(sim.frames):
     print(i)
 
     
-for pic in frameArr:
+for pic in frameArr: #Rot- und Blaukanal werden getauscht
     for i in range(len(pic)):
         pic[i][:, [2, 0]] = pic[i][:, [0, 2]]
 
 Utility.cptv(frameArr,"video.mp4",sim.fps)
 
-print("Das Video wurde erstellt.")      #██████████████████████████████████████████████████████████ bestes Zeichen 
+print("Das Video wurde erstellt.")
