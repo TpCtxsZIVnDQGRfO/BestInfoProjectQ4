@@ -446,7 +446,7 @@ frame_test.create_frame()
 frame_test.frame.pack(fill=BOTH, expand=True, side=BOTTOM, anchor=S)
 '''
 
-#class Frame Nodes
+#class Frame Nodes-Simulation
 class input_simulationB:
     # Startbedingungen der Nodes, flowchart, Größe des Canvas, Auflösung der Visualisierung, Farben der Nodes in den verschiedenen Zuständen, Geschwindigkeit der Nodes, Framerate des Videos, Videolänge, Anzahl und Positionen der Barrieren, maximale Entfernung, mit der zwei Nodes noch verbunden sind, Maximalabstand, den Nodes zu ihrem Startpunkt haben können, Visuals der Barrieren und Verbindungen
     def __init__(self, ID, name, len_x, len_y, p0_coordinates, steps, infection, recovery):
