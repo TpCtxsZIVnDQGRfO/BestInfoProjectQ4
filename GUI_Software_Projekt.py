@@ -9,6 +9,7 @@ from ast import literal_eval
 
 import numpy as np
 import time
+import threading
 
 import matplotlib
 matplotlib.use("TkAgg")
@@ -39,6 +40,7 @@ fenster.geometry("675x675")
 # To-Do-List
 # - weiß werden der p0_coordinates_tf bzw. rot werden
 # - Speicherung der p0_coordinates in schönem Format zum Wiederöffnen
+# - Bug bei Copy-Pasting in Infection-Field
 
 
 #class Frame Rechteck
@@ -121,7 +123,7 @@ class input_simulationA:
         fenster.bind('<ButtonRelease-1>', motion)
         fenster.bind('<Button-1>', motion)
         '''
-
+        
         def motion(event):
             len_x_tf.icursor("end")
             len_y_tf.icursor("end")
@@ -129,12 +131,13 @@ class input_simulationA:
             infection_tf.icursor("end")
             recovery_tf.icursor("end")
 
-
+        
         fenster.bind('<Button-1>', motion)
         fenster.bind('<ButtonRelease-1>', motion)
         fenster.bind('<Left>', motion)
         fenster.bind('<Right>', motion)
-
+        fenster.bind('<BackSpace>', motion)
+        
 
         # Funktionen zur Einstellung einer maxlength für die Textfelder und Regulierung der erlaubten Zeichen
         def limitSizeX(*args):
@@ -434,6 +437,7 @@ class input_simulationA:
         data_list[pos][2][5] = self.infection
         data_list[pos][2][6] = self.recovery
 
+
 '''
 # Code für eine Beispiel Initialisierung einer Simulation
 
@@ -441,6 +445,23 @@ frame_test = input_simulationA(0, "Nicer Dicer", 200, 400, [[50,50],[51,351]], 1
 frame_test.create_frame()
 frame_test.frame.pack(fill=BOTH, expand=True, side=BOTTOM, anchor=S)
 '''
+
+#class Frame Nodes
+class input_simulationB:
+    # Startbedingungen der Nodes, flowchart, Größe des Canvas, Auflösung der Visualisierung, Farben der Nodes in den verschiedenen Zuständen, Geschwindigkeit der Nodes, Framerate des Videos, Videolänge, Anzahl und Positionen der Barrieren, maximale Entfernung, mit der zwei Nodes noch verbunden sind, Maximalabstand, den Nodes zu ihrem Startpunkt haben können, Visuals der Barrieren und Verbindungen
+    def __init__(self, ID, name, len_x, len_y, p0_coordinates, steps, infection, recovery):
+        self.ID = ID
+        self.name = name
+        self.len_x = len_x
+        self.len_y = len_y
+        self.p0_coordinates = p0_coordinates
+        self.steps = steps
+        self.infection = infection
+        self.recovery = recovery
+
+        self.frame = Frame(fenster)
+        self.frame.config(bg='red')
+
 
 class output_simulationA:
     def __init__(self, name, steps, len_x, len_y, sim):
