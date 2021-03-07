@@ -796,7 +796,7 @@ class input_simulationB:
 
         # Starten der Simulation
         def start_button_action():
-            #start_button.config(state=DISABLED)
+            #start_button.config(state=DISABLED)            
             try:
                 pos = -1
                 for i in range(len(data_list)):
@@ -806,21 +806,28 @@ class input_simulationB:
                 data_list[pos][4].update_data_list()
                 
                 # Simulation Initialisieren
+
+                
                 flowchart = np.array([[0,0.05,0],[0,0,0.00025],[0,0,0]])
                 
                 sim = Simulation([],flowchart, 5, 10, 5, 90)    # Muss noch veränderbar gemacht werden
-
+                
                 sim.frames = data_list[pos][2][1]
+                sim.canvas = [data_list[pos][2][12], data_list[pos][2][13]]
+                sim.resolution = [data_list[pos][2][14], data_list[pos][2][15]]
+                
                 sim.addRandomNode(data_list[pos][2][2], [1,0,0])
                 for i in range(data_list[pos][2][3]):               # Anfangsinfizierte
-                    sim.node[i].state = [0,1,0]
+                    sim.nodes[i].state = [0,1,0]
+                
                 sim.speed = data_list[pos][2][4]
                 sim.addRandomKH(data_list[pos][2][5], data_list[pos][2][6])
+                
                 sim.Behandlungsdauer = data_list[pos][2][7]
                 sim.KHWeg = data_list[pos][2][8]
                 sim.maxDist = data_list[pos][2][9]
                 sim.movementRadius = data_list[pos][2][10]
-
+                
                 sim.barrierColour = "red" 
                 sim.barrierWidth = 2
                 sim.connecColour = "white"
@@ -829,7 +836,7 @@ class input_simulationB:
                 for i in data_list[pos][2][11]:
                     sim.barriers.append([[i[0],i[1]],[i[2],i[3]]])
 
-                # Test
+                
                 frameArr = []
                 for i in range(sim.frames):
                     sim.generate_connections()
@@ -930,6 +937,10 @@ class input_simulationB:
         data_list[pos][2][9] = self.infection_radius
         data_list[pos][2][10] = self.movement_radius
         data_list[pos][2][11] = self.barriers
+        data_list[pos][2][12] = self.canvas_x
+        data_list[pos][2][13] = self.canvas_y
+        data_list[pos][2][14] = self.resolution_x
+        data_list[pos][2][15] = self.resolution_y
 
 
 class output_simulationA:
@@ -1040,9 +1051,9 @@ def create_typ_0_button_action():
 def create_typ_1_button_action():
     toolbox[1] += 1
     # default Werte
-    data =[1,100, 400, 5, 30, 3, 5, 2, 300, 50, 500, [[800,100,800,800]]]
+    data =[1,30, 400, 5, 30, 3, 5, 2, 300, 50, 500, [[800,100,800,800]], 1600, 900, 1600, 900]
     # Erstellung des Frames
-    frame_simulation = input_simulationB(toolbox[1],"Untitled",data[1],data[2],data[3],data[4],data[5],data[6],data[7],data[8],data[9],data[10],data[11])
+    frame_simulation = input_simulationB(toolbox[1],"Untitled",data[1],data[2],data[3],data[4],data[5],data[6],data[7],data[8],data[9],data[10],data[11],data[12],data[13],data[14],data[15])
     frame_simulation.create_frame()
     # Hinzufügen der Simulation in das data_list-Array
     data_list.append([toolbox[1]]+["Untitled"]+[data]+[None]+[frame_simulation])
