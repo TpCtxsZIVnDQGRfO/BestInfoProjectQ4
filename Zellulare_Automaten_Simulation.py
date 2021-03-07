@@ -111,9 +111,14 @@ class simulation:
         for i in range(self.data.shape[3]):
             self.images[self.data[:, :, :, i] == 1] = colors[i]
 
+    def generate_images(self, colors):
+        self.images = np.zeros(list(self.data.shape[:3]) + [3])
+        for i in range(len(colors)):
+            self.images[self.data[:, :, :, i] == 1] = colors[i]
+
 
 class oneD_cellular_automata:
-    # Mir wurde von einem Mitschüler gesagt, dass man keine Zellulären Autimaten ohne Conways Game of Life macht,
+
     def __init__(self, iterations, rules, start):
         self.iterations = iterations
         self.rules = rules
@@ -145,6 +150,8 @@ class oneD_cellular_automata:
             for j in range(1, self.data.shape[0] - 1, 1):
                 self.data[i][j] = self.f(self.data[i - 1][j - 1], self.data[i - 1][j], self.data[i - 1][j + 1])
 
+    # Mir wurde von einem Mitschüler gesagt, dass man keine Zellulären Automaten ohne Conways Game of Life macht,
+
 
 class conways_game_of_life:
     def __init__(self, start, iterations):
@@ -172,7 +179,6 @@ class conways_game_of_life:
         for i in range(1, self.iterations, 1):
             self.data[i] = self.rules(np.copy(self.data[i - 1]))
 
-
 # ------------------------------------------------Beispielinitialisierung SIR-Modell:------------------------------------------------------
 # Ein beispielhafte Anwendung wäre das SIR-Modell (mit räumlicher Beschränkung) soll stark vereinfacht die Verbreitung von Krankenheiten
 # in  einer festen Bevölkerung modellieren, Jede Zelle steht für eine Person und hat zu jedem Zeitpunkt t eine der folgenden Eigenschaften:
@@ -196,7 +202,7 @@ class conways_game_of_life:
 # start[100:105,100:105] = [0,1,0]
 # sir = simulation(start, 300, flow_m, flow_c)
 # sir.run()
-# sir.generate_images()
+# sir.generate_images(colors = [[1,0,0],[0,1,0],[0,0,1]])
 # for i in range(0,300,50):
 #     plt.imshow(sir.images[i])
 #     plt.show()
@@ -231,17 +237,17 @@ class conways_game_of_life:
 #
 # ----------------------------------------------Beispiel Initialisierung 4------------------------------------------------------------------
 #
-if __name__ == "__main__":
-    iterations = 10
-    start = np.zeros([5, 5])
-    start[3, :5] = 1
+# iterations = 10
+# start = np.zeros([5, 5])
+# start[3, :5] = 1
+#
+# conways = conways_game_of_life(start, iterations)
+# plt.imshow(conways.data[0])
+# plt.show()
+# conways.run()
+# plt.imshow(conways.data[0])
+# plt.show()
+# for i in range(conways.iterations):
+#     plt.imshow(conways.data[i], cmap="gray")
+#     plt.show()
 
-    conways = conways_game_of_life(start, iterations)
-    plt.imshow(conways.data[0])
-    plt.show()
-    conways.run()
-    plt.imshow(conways.data[0])
-    plt.show()
-    for i in range(conways.iterations):
-        plt.imshow(conways.data[i], cmap="gray")
-        plt.show()

@@ -54,6 +54,25 @@ def froll2d(arr, shift, fill_value = 0):
         temp[:,:shift[1]] = temp[:,-shift[1]:]
         temp[:,shift[1]:] = fill_value
     return temp
+#Gubt das geschiftete Array wieder, Eintrage die am einen Ende "rausgeschoben" werden tauchen an anderen wieder auf
+def froll2d2(arr, shift):
+    temp = np.zeros(arr.shape)
+    if shift[0] == 0:
+        temp = np.copy(arr)
+    if shift[0]>0:
+        temp[:shift[0],:] = arr[-shift[0]:,:]
+        temp[shift[0]:,:] = arr[:-shift[0],:]
+    if shift[0]<0:
+        temp[shift[0]:,:] = arr[:-shift[0],:]
+        temp[:shift[0],:] = arr[-shift[0]:,:]
+    if shift[1]>0:
+        temp[:,:shift[1]] = temp[:,-shift[1]:]
+        temp[:,shift[1]:] = temp[:,:-shift[1]]
+    if shift[1]<0:
+        temp[:,shift[1]:] = temp[:,shift[1]:]
+        temp[:,:shift[1]] = temp[:,-shift[1]:]
+    return temp
+
 
 ##test = np.array([[1,2,3],[4,5,6],[7,8,9]])
 ##print(test)
