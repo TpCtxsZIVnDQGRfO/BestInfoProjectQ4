@@ -113,7 +113,7 @@ class simulation:
 
 
 class oneD_cellular_automata:
-    # Mir wurde von einem Mitschüler gesagt, dass man keine Zellulären Autimaten ohne Conways Game of Life macht,
+
     def __init__(self, iterations, rules, start):
         self.iterations = iterations
         self.rules = rules
@@ -145,6 +145,8 @@ class oneD_cellular_automata:
             for j in range(1, self.data.shape[0] - 1, 1):
                 self.data[i][j] = self.f(self.data[i - 1][j - 1], self.data[i - 1][j], self.data[i - 1][j + 1])
 
+    # Mir wurde von einem Mitschüler gesagt, dass man keine Zellulären Automaten ohne Conways Game of Life macht,
+
 
 class conways_game_of_life:
     def __init__(self, start, iterations):
@@ -171,7 +173,6 @@ class conways_game_of_life:
     def run(self):
         for i in range(1, self.iterations, 1):
             self.data[i] = self.rules(np.copy(self.data[i - 1]))
-
 
 # ------------------------------------------------Beispielinitialisierung SIR-Modell:------------------------------------------------------
 # Ein beispielhafte Anwendung wäre das SIR-Modell (mit räumlicher Beschränkung) soll stark vereinfacht die Verbreitung von Krankenheiten
@@ -231,16 +232,16 @@ class conways_game_of_life:
 #
 # ----------------------------------------------Beispiel Initialisierung 4------------------------------------------------------------------
 #
-iterations = 10
-start = np.zeros([5, 5])
-start[3, :5] = 1
-
-conways = conways_game_of_life(start, iterations)
-plt.imshow(conways.data[0])
-plt.show()
-conways.run()
-plt.imshow(conways.data[0])
-plt.show()
-for i in range(conways.iterations):
-    plt.imshow(conways.data[i], cmap="gray")
-    plt.show()
+# iterations = 10
+# start = np.zeros([5, 5])
+# start[3, :5] = 1
+#
+# conways = conways_game_of_life(start, iterations)
+# plt.imshow(conways.data[0])
+# plt.show()
+# conways.run()
+# plt.imshow(conways.data[0])
+# plt.show()
+# for i in range(conways.iterations):
+#     plt.imshow(conways.data[i], cmap="gray")
+#     plt.show()
