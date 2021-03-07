@@ -373,6 +373,7 @@ class input_simulationA:
 
                 sir = simulation(start, self.steps, flow_m, flow_c)
                 sir.run()
+                sir.generate_images()
                 out = output_simulationA(self.name, self.steps, self.len_x, self.len_y, sir)
 
             except:
@@ -462,6 +463,26 @@ class input_simulationB:
         self.frame = Frame(fenster)
         self.frame.config(bg='red')
 
+    def create_frame(self):
+        # Frames
+        grafic_frame = Frame(master=self.frame, bg='green')
+        grafic_frame.pack(side=TOP, padx='5', pady='5', fill=BOTH)
+
+        name_frame = Frame(master=self.frame, bg='yellow')
+        name_frame.pack(side='top', padx='5', pady='5', fill=X)
+
+        components_frame = Frame(master=self.frame, bg='green')
+        components_frame.pack(padx='5', pady='5', fill=X)
+
+        label_frame = Frame(master=components_frame, bg='magenta')
+        label_frame.pack(side='left', padx='5', pady='5')
+
+        tf_frame = Frame(master=components_frame, bg='red')
+        tf_frame.pack(side='right', padx='5', pady='5')
+
+        start_frame = Frame(master=self.frame, bg='blue')
+        start_frame.pack(side='top', padx='5', pady='5', fill=X)
+
 
 class output_simulationA:
     def __init__(self, name, steps, len_x, len_y, sim):
@@ -489,7 +510,7 @@ class output_simulationA:
         slider_frame.pack(side='bottom', padx='5', pady='5', fill=X)
 
         # Grafik
-        data = self.sim.get(0)
+        data = self.sim.images[0]
 
         image = data
         fig = plt.figure(figsize=(5,4))
@@ -509,7 +530,7 @@ class output_simulationA:
 
         # Grafik-Update-Funktion: Wird aufgerufen, wenn der Slider bewegt wird
         def grafic_change(self):
-            data = sim.get(int(self))
+            data = sim.images[int(self)]
             im.set_data(data)
 
             canvas.draw()
@@ -517,7 +538,8 @@ class output_simulationA:
         # Reset-Button: Führt Simulation ein weiteres Mal aus
         def reset_button_action():
             sim.run()
-            data = sim.get(0)
+            sim.generate_images()
+            data = sim.images[0]
             time_slider.set(0)
             im.set_data(data)
 
@@ -568,7 +590,23 @@ def create_typ_0_button_action():
 
 # Erstellung einer neuen Simulation des Node-Formats
 def create_typ_1_button_action():
-    print("Noch in Bearbeitung")
+    toolbox[1] += 1
+    # default Werte
+    data =[0,200,200,[[100,100,110,110],[10,10]],300,0.15,0.25]
+    # Erstellung des Frames
+    frame_simulation = input_simulationB(toolbox[1],"Untitled",data[1],data[2],data[3],data[4],data[5],data[6])
+    frame_simulation.create_frame()
+    # Hinzufügen der Simulation in das data_list-Array
+    data_list.append([toolbox[1]]+["Untitled"]+[data]+[None]+[frame_simulation])
+
+    id = toolbox[1]
+    # Menübar hinzufügen zu Simulation-Menu
+    simulation_menu.add_command(label="Untitled"+str(id), command=lambda: action_simulation(id))
+
+    # Wenn mit dieser Simulation die Simulationsanzahl von 4 überschritten wird, d.h. 5 vorhanden sind, dann sollen die Buttons "Create" und "Load" disabled werden
+    if(len(data_list) > 4):
+        datei_menu.entryconfig(1, state=DISABLED)
+        datei_menu.entryconfig(0, state=DISABLED)
 
 # Laden einer Simulation
 def load_button_action():
