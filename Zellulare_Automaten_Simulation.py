@@ -250,3 +250,4 @@ class conways_game_of_life:
 # for i in range(conways.iterations):
 #     plt.imshow(conways.data[i], cmap="gray")
 #     plt.show()
+

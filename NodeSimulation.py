@@ -391,38 +391,39 @@ class Utility(): #allerlei nützliche Funktionen
 #welcher für die Übertragungswahrscheinlichkeit zwsichen den Personen steht
 #Wie im Zellulären Automatenmodell gibt es drei Zustände: suscepteble, infective, recovered (siehe Zelluläler-Automat-Simulation)
 
-flowchart = np.array([[0,0.05,0],[0,0,0.00025],[0,0,0]])
-sim = Simulation([],flowchart, 5, 10, 5, 90)
-sim.frames = 110
-sim.canvas = [1600,900]
-sim.resolution = [1600,900]
-sim.addRandomNode(400,[1,0,0])
-sim.addRandomKH(3,5)
-sim.maxDist = 50
-sim.movementRadius = 500
+if __name__ == "__main__":
+    flowchart = np.array([[0,0.05,0],[0,0,0.00025],[0,0,0]])
+    sim = Simulation([],flowchart, 5, 10, 5, 90)
+    sim.frames = 30
+    sim.canvas = [1600,900]
+    sim.resolution = [1600,900]
+    sim.addRandomNode(400,[1,0,0])
+    sim.addRandomKH(3,5)
+    sim.maxDist = 50
+    sim.movementRadius = 500
 
-sim.barrierColour = "red" 
-sim.barrierWidth = 2
-sim.connecColour = "white"
-sim.connecWidth = 1
+    sim.barrierColour = "red" 
+    sim.barrierWidth = 2
+    sim.connecColour = "white"
+    sim.connecWidth = 1
 
-sim.barriers.append([[800,100],[800,800]])
+    sim.barriers.append([[800,100],[800,800]])
 
-for i in range(5):
-    sim.nodes[i].state = [0,1,0] #die ersten fünf Nodes sind infiziert
+    for i in range(5):
+        sim.nodes[i].state = [0,1,0] #die ersten fünf Nodes sind infiziert
 
-frameArr = []
-for i in range(sim.frames):
-    sim.generate_connections()
-    frameArr.append(np.array(sim.visualComplete()))
-    sim.run(1)
-    print(i)
+    frameArr = []
+    for i in range(sim.frames):
+        sim.generate_connections()
+        frameArr.append(np.array(sim.visualComplete()))
+        sim.run(1)
+        print(i)
 
-    
-for pic in frameArr: #Rot- und Blaukanal werden getauscht
-    for i in range(len(pic)):
-        pic[i][:, [2, 0]] = pic[i][:, [0, 2]]
+        
+    for pic in frameArr: #Rot- und Blaukanal werden getauscht
+        for i in range(len(pic)):
+            pic[i][:, [2, 0]] = pic[i][:, [0, 2]]
 
-Utility.cptv(frameArr,"video.mp4",sim.fps)
+    Utility.cptv(frameArr,"video.mp4",sim.fps)
 
-print("Das Video wurde erstellt.")
+    print("Das Video wurde erstellt.")

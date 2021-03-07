@@ -9,6 +9,7 @@ from ast import literal_eval
 
 import numpy as np
 import time
+import threading
 
 import matplotlib
 matplotlib.use("TkAgg")
@@ -39,6 +40,7 @@ fenster.geometry("675x675")
 # To-Do-List
 # - weiß werden der p0_coordinates_tf bzw. rot werden
 # - Speicherung der p0_coordinates in schönem Format zum Wiederöffnen
+# - Bug bei Copy-Pasting in Infection-Field
 
 
 #class Frame Rechteck
@@ -121,7 +123,7 @@ class input_simulationA:
         fenster.bind('<ButtonRelease-1>', motion)
         fenster.bind('<Button-1>', motion)
         '''
-
+        
         def motion(event):
             len_x_tf.icursor("end")
             len_y_tf.icursor("end")
@@ -129,12 +131,13 @@ class input_simulationA:
             infection_tf.icursor("end")
             recovery_tf.icursor("end")
 
-
+        
         fenster.bind('<Button-1>', motion)
         fenster.bind('<ButtonRelease-1>', motion)
         fenster.bind('<Left>', motion)
         fenster.bind('<Right>', motion)
-
+        fenster.bind('<BackSpace>', motion)
+        
 
         # Funktionen zur Einstellung einer maxlength für die Textfelder und Regulierung der erlaubten Zeichen
         def limitSizeX(*args):
@@ -370,6 +373,7 @@ class input_simulationA:
 
                 sir = simulation(start, self.steps, flow_m, flow_c)
                 sir.run()
+                sir.generate_images()
                 out = output_simulationA(self.name, self.steps, self.len_x, self.len_y, sir)
 
             except:
@@ -434,6 +438,7 @@ class input_simulationA:
         data_list[pos][2][5] = self.infection
         data_list[pos][2][6] = self.recovery
 
+
 '''
 # Code für eine Beispiel Initialisierung einer Simulation
 
@@ -441,6 +446,57 @@ frame_test = input_simulationA(0, "Nicer Dicer", 200, 400, [[50,50],[51,351]], 1
 frame_test.create_frame()
 frame_test.frame.pack(fill=BOTH, expand=True, side=BOTTOM, anchor=S)
 '''
+
+#class Frame Nodes-Simulation
+class input_simulationB:
+    # Startbedingungen der Nodes, flowchart, Größe des Canvas, Auflösung der Visualisierung, Farben der Nodes in den verschiedenen Zuständen, Geschwindigkeit der Nodes, Framerate des Videos, Videolänge, Anzahl und Positionen der Barrieren, maximale Entfernung, mit der zwei Nodes noch verbunden sind, Maximalabstand, den Nodes zu ihrem Startpunkt haben können, Visuals der Barrieren und Verbindungen
+    def __init__(self, ID, name, frames, node_number, infected_number, node_speed, hospital_number, hospital_capacity, recovery_time, hospital_distance, infection_radius, movement_radius, barriers = [], canvas_x = 1600, canvas_y = 900, resolution_x = 1600, resolution_y = 900):
+        self.ID = ID
+        self.name = name
+        self.frames = frames
+        
+        self.node_number = node_number
+        self.infected_number = infected_number
+        self.node_speed = node_speed
+        
+        self.hospital_number = hospital_number
+        self.hospital_capacity = hospital_capacity
+        self.recovery_time = recovery_time
+        self.hospital_distance = hospital_distance
+        
+        self.infection_radius = infection_radius
+        self.movement_radius = movement_radius
+        
+        self.barriers = barriers
+        
+        self.canvas_x = canvas_x
+        self.canvas_y = canvas_y
+        self.resolution_x = resolution_x
+        self.resolution_y = resolution_y
+
+        self.frame = Frame(fenster)
+        self.frame.config(bg='red')
+
+    def create_frame(self):
+        # Frames
+        grafic_frame = Frame(master=self.frame, bg='green')
+        grafic_frame.pack(side=TOP, padx='5', pady='5', fill=BOTH)
+
+        name_frame = Frame(master=self.frame, bg='yellow')
+        name_frame.pack(side='top', padx='5', pady='5', fill=X)
+
+        components_frame = Frame(master=self.frame, bg='green')
+        components_frame.pack(padx='5', pady='5', fill=X)
+
+        label_frame = Frame(master=components_frame, bg='magenta')
+        label_frame.pack(side='left', padx='5', pady='5')
+
+        tf_frame = Frame(master=components_frame, bg='red')
+        tf_frame.pack(side='right', padx='5', pady='5')
+
+        start_frame = Frame(master=self.frame, bg='blue')
+        start_frame.pack(side='top', padx='5', pady='5', fill=X)
+
 
 class output_simulationA:
     def __init__(self, name, steps, len_x, len_y, sim):
@@ -468,7 +524,7 @@ class output_simulationA:
         slider_frame.pack(side='bottom', padx='5', pady='5', fill=X)
 
         # Grafik
-        data = self.sim.get(0)
+        data = self.sim.images[0]
 
         image = data
         fig = plt.figure(figsize=(5,4))
@@ -488,7 +544,7 @@ class output_simulationA:
 
         # Grafik-Update-Funktion: Wird aufgerufen, wenn der Slider bewegt wird
         def grafic_change(self):
-            data = sim.get(int(self))
+            data = sim.images[int(self)]
             im.set_data(data)
 
             canvas.draw()
@@ -496,7 +552,8 @@ class output_simulationA:
         # Reset-Button: Führt Simulation ein weiteres Mal aus
         def reset_button_action():
             sim.run()
-            data = sim.get(0)
+            sim.generate_images()
+            data = sim.images[0]
             time_slider.set(0)
             im.set_data(data)
 
@@ -547,7 +604,23 @@ def create_typ_0_button_action():
 
 # Erstellung einer neuen Simulation des Node-Formats
 def create_typ_1_button_action():
-    print("Noch in Bearbeitung")
+    toolbox[1] += 1
+    # default Werte
+    data =[0,200,200,[[100,100,110,110],[10,10]],300,0.15,0.25]
+    # Erstellung des Frames
+    frame_simulation = input_simulationB(toolbox[1],"Untitled",data[1],data[2],data[3],data[4],data[5],data[6])
+    frame_simulation.create_frame()
+    # Hinzufügen der Simulation in das data_list-Array
+    data_list.append([toolbox[1]]+["Untitled"]+[data]+[None]+[frame_simulation])
+
+    id = toolbox[1]
+    # Menübar hinzufügen zu Simulation-Menu
+    simulation_menu.add_command(label="Untitled"+str(id), command=lambda: action_simulation(id))
+
+    # Wenn mit dieser Simulation die Simulationsanzahl von 4 überschritten wird, d.h. 5 vorhanden sind, dann sollen die Buttons "Create" und "Load" disabled werden
+    if(len(data_list) > 4):
+        datei_menu.entryconfig(1, state=DISABLED)
+        datei_menu.entryconfig(0, state=DISABLED)
 
 # Laden einer Simulation
 def load_button_action():
