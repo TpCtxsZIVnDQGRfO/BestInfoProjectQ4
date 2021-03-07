@@ -450,15 +450,29 @@ frame_test.frame.pack(fill=BOTH, expand=True, side=BOTTOM, anchor=S)
 #class Frame Nodes-Simulation
 class input_simulationB:
     # Startbedingungen der Nodes, flowchart, Größe des Canvas, Auflösung der Visualisierung, Farben der Nodes in den verschiedenen Zuständen, Geschwindigkeit der Nodes, Framerate des Videos, Videolänge, Anzahl und Positionen der Barrieren, maximale Entfernung, mit der zwei Nodes noch verbunden sind, Maximalabstand, den Nodes zu ihrem Startpunkt haben können, Visuals der Barrieren und Verbindungen
-    def __init__(self, ID, name, len_x, len_y, p0_coordinates, steps, infection, recovery):
+    def __init__(self, ID, name, frames, node_number, infected_number, node_speed, hospital_number, hospital_capacity, recovery_time, hospital_distance, infection_radius, movement_radius, barriers = [], canvas_x = 1600, canvas_y = 900, resolution_x = 1600, resolution_y = 900):
         self.ID = ID
         self.name = name
-        self.len_x = len_x
-        self.len_y = len_y
-        self.p0_coordinates = p0_coordinates
-        self.steps = steps
-        self.infection = infection
-        self.recovery = recovery
+        self.frames = frames
+        
+        self.node_number = node_number
+        self.infected_number = infected_number
+        self.node_speed = node_speed
+        
+        self.hospital_number = hospital_number
+        self.hospital_capacity = hospital_capacity
+        self.recovery_time = recovery_time
+        self.hospital_distance = hospital_distance
+        
+        self.infection_radius = infection_radius
+        self.movement_radius = movement_radius
+        
+        self.barriers = barriers
+        
+        self.canvas_x = canvas_x
+        self.canvas_y = canvas_y
+        self.resolution_x = resolution_x
+        self.resolution_y = resolution_y
 
         self.frame = Frame(fenster)
         self.frame.config(bg='red')
