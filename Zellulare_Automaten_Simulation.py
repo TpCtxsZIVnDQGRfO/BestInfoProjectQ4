@@ -111,6 +111,11 @@ class simulation:
         for i in range(self.data.shape[3]):
             self.images[self.data[:, :, :, i] == 1] = colors[i]
 
+    def generate_images(self, colors):
+        self.images = np.zeros(list(self.data.shape[:3]) + [3])
+        for i in range(len(colors)):
+            self.images[self.data[:, :, :, i] == 1] = colors[i]
+
 
 class oneD_cellular_automata:
 
@@ -197,7 +202,7 @@ class conways_game_of_life:
 # start[100:105,100:105] = [0,1,0]
 # sir = simulation(start, 300, flow_m, flow_c)
 # sir.run()
-# sir.generate_images()
+# sir.generate_images(colors = [[1,0,0],[0,1,0],[0,0,1]])
 # for i in range(0,300,50):
 #     plt.imshow(sir.images[i])
 #     plt.show()
