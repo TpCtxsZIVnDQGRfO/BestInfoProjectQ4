@@ -231,16 +231,17 @@ class conways_game_of_life:
 #
 # ----------------------------------------------Beispiel Initialisierung 4------------------------------------------------------------------
 #
-iterations = 10
-start = np.zeros([5, 5])
-start[3, :5] = 1
+if __name__ == "__main__":
+    iterations = 10
+    start = np.zeros([5, 5])
+    start[3, :5] = 1
 
-conways = conways_game_of_life(start, iterations)
-plt.imshow(conways.data[0])
-plt.show()
-conways.run()
-plt.imshow(conways.data[0])
-plt.show()
-for i in range(conways.iterations):
-    plt.imshow(conways.data[i], cmap="gray")
+    conways = conways_game_of_life(start, iterations)
+    plt.imshow(conways.data[0])
     plt.show()
+    conways.run()
+    plt.imshow(conways.data[0])
+    plt.show()
+    for i in range(conways.iterations):
+        plt.imshow(conways.data[i], cmap="gray")
+        plt.show()
