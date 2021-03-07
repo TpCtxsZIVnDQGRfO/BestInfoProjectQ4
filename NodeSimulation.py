@@ -401,6 +401,7 @@ if __name__ == "__main__":
     sim.addRandomKH(3,5)
     sim.maxDist = 50
     sim.movementRadius = 500
+    #sim.speed = 100
 
     sim.barrierColour = "red" 
     sim.barrierWidth = 2
