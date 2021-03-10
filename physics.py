@@ -23,7 +23,7 @@ def project(arr):
     return temp
 
 
-n = 5
+n = 12
 coordinates = np.random.rand(n, 2)
 for i in range(1000):
     dis = distances(coordinates)
