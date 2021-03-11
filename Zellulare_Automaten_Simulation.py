@@ -66,8 +66,7 @@ class simulation:
         for i in range(1, self.iter, 1):
             self.data[i] = self.data[i - 1]
             for j in range(len(self.flow)):
-                temp = self.spread(self.data[i - 1, :, :, self.flow[j][1]], self.data[i - 1, :, :, self.flow[j][2][0]],
-                                   self.flow[j][0])
+                temp = self.spread(self.data[i - 1, :, :, self.flow[j][1]], self.data[i - 1, :, :, self.flow[j][2][0]], self.flow[j][0])
                 self.data[i, :, :, self.flow[j][2][0]] = self.data[i, :, :, self.flow[j][2][0]] - temp
                 self.data[i, :, :, self.flow[j][2][1]] = self.data[i, :, :, self.flow[j][2][1]] + temp
 
@@ -110,12 +109,11 @@ class simulation:
             colors[i][2] = 1 - i * 1 / self.data.shape[3]
         for i in range(self.data.shape[3]):
             self.images[self.data[:, :, :, i] == 1] = colors[i]
-
-    def generate_images(self, colors):
+        
+    """def generate_images(self, colors):
         self.images = np.zeros(list(self.data.shape[:3]) + [3])
         for i in range(len(colors)):
-            self.images[self.data[:, :, :, i] == 1] = colors[i]
-
+            self.images[self.data[:, :, :, i] == 1] = colors[i]"""
 
 class oneD_cellular_automata:
 
