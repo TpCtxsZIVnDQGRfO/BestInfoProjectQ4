@@ -373,7 +373,7 @@ class input_simulationA:
                 # Festlegung der anfänglichen Infizierten
                 for i in self.p0_coordinates:
                     start[i[0],i[1]] = [0,1,0]
-
+    
                 sir = simulation(start, self.steps, flow_m, flow_c)
                 sir.run()
                 sir.generate_images()
