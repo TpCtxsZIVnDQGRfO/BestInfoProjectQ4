@@ -20,6 +20,8 @@ from matplotlib.figure import Figure
 from matplotlib import pyplot as plt
 import matplotlib.animation as animation
 
+from playsound import playsound
+
 
 # Globale Variablen
 data_list = [] # Datenstruktur: [ID, Name der Simulation, Daten Array, Filepath, Frame]
@@ -1076,32 +1078,45 @@ def load_button_action():
     if not filepath:
         return
     with open(filepath, "r") as input_file:
-        # Inhalt der Text-Datei: Zeilen als Array-Einträge nehmen
-        text = input_file.read()
-        text = text.split('\n')
-        # Hochsetzen des Load-Counters
-        toolbox[1] += 1
-        # Strings aus der Text-Datei in richtige Datentypen umwandeln
-        data =[int(text[1]),int(text[2]),int(text[3]),literal_eval(text[4]),int(text[5]),float(text[6]),float(text[7])]
-        # Wenn das Rechteck-Format bei der Simulation ausgewählt wurde
-        if(data[0] == 0):
-            # Erstellung des Frames
-            frame_simulation = input_simulationA(toolbox[1],text[0],int(text[2]),int(text[3]),literal_eval(text[4]),int(text[5]),float(text[6]),float(text[7]))
+        try:
+            # Inhalt der Text-Datei: Zeilen als Array-Einträge nehmen
+            text = input_file.read()
+            text = text.split('\n')
+            # Hochsetzen des Load-Counters
+            toolbox[1] += 1
+            
+            # Wenn das Rechteck-Format bei der Simulation ausgewählt wurde
+            if(int(text[1]) == 0):
+                # Strings aus der Text-Datei in richtige Datentypen umwandeln
+                data =[int(text[1]),int(text[2]),int(text[3]),literal_eval(text[4]),int(text[5]),float(text[6]),float(text[7])]
+                # Erstellung des Frames
+                frame_simulation = input_simulationA(toolbox[1],text[0],int(text[2]),int(text[3]),literal_eval(text[4]),int(text[5]),float(text[6]),float(text[7]))
+                
+            elif(int(text[1]) == 1):
+                # Strings aus der Text-Datei in richtige Datentypen umwandeln
+                data =[int(text[1]),int(text[2]),int(text[3]),int(text[4]),int(text[5]),int(text[6]),int(text[7]),int(text[8]),int(text[9]),int(text[10]),int(text[11]),literal_eval(text[12]),int(text[13]),int(text[14]),int(text[15]),int(text[16])]
+                # Erstellung des Frames
+                frame_simulation = input_simulationB(toolbox[1],text[0],int(text[2]),int(text[3]),int(text[4]),int(text[5]),int(text[6]),int(text[7]),int(text[8]),int(text[9]),int(text[10]),int(text[11]),literal_eval(text[12]),int(text[13]),int(text[14]),int(text[15]),int(text[16]))
+
             frame_simulation.create_frame()
-        # Hinzufügen der Simulation in das data_list-Array
-        data_list.append([toolbox[1]]+[text[0]]+[data]+[filepath]+[frame_simulation])
+            # Hinzufügen der Simulation in das data_list-Array
+            data_list.append([toolbox[1]]+[text[0]]+[data]+[filepath]+[frame_simulation])
 
-        id = toolbox[1]
-        # Menübar hinzufügen zu Simulation-Menu
-        simulation_menu.add_command(label=text[0], command=lambda: action_simulation(id))
+            id = toolbox[1]
+            # Menübar hinzufügen zu Simulation-Menu
+            simulation_menu.add_command(label=text[0], command=lambda: action_simulation(id))
 
-        # Wenn mit dieser Simulation die Simulationsanzahl von 4 überschritten wird, d.h. 5 vorhanden sind, dann sollen die Buttons "Create" und "Load" disabled werden
-        if(len(data_list) > 4):
-            datei_menu.entryconfig(1, state=DISABLED)
-            datei_menu.entryconfig(0, state=DISABLED)
+            # Wenn mit dieser Simulation die Simulationsanzahl von 4 überschritten wird, d.h. 5 vorhanden sind, dann sollen die Buttons "Create" und "Load" disabled werden
+            if(len(data_list) > 4):
+                datei_menu.entryconfig(1, state=DISABLED)
+                datei_menu.entryconfig(0, state=DISABLED)
+        except:
+            m_text = "    ************************\n    Geladene Datei ist fehlerhaft\n    ************************"
+            messagebox.showinfo(message=m_text, title = "Error")
 
 # Auswerfen der aktuell ausgewählten Simulation aus dem Editor
 def dismiss_button_action():
+    playsound('Soundeffects/Blop.mp3')
     # Button aus der Menubar entfernen
     simulation_menu.delete(toolbox[0])
     # Angezeigter Frame löschen
