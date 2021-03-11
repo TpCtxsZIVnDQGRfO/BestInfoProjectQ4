@@ -97,8 +97,8 @@ class Simulation:
                         distance = self.distance(self.nodes[i],self.nodes[j+i])
                         for barrier in self.barriers:
                             if wegVersperrt == False:
-                                k1 = sim.nodes[i].k
-                                k2 = sim.nodes[i+j].k
+                                k1 = self.nodes[i].k
+                                k2 = self.nodes[i+j].k
                                 b1 = barrier[0]
                                 b2 = barrier[1]
                                 if Utility.do_they_intersect(k1, k2, b1, b2): #schneiden sich Barrierenstrecke und Verbindungsstrecke?
@@ -401,6 +401,7 @@ if __name__ == "__main__":
     sim.addRandomKH(3,5)
     sim.maxDist = 50
     sim.movementRadius = 500
+    #sim.speed = 100
 
     sim.barrierColour = "red" 
     sim.barrierWidth = 2

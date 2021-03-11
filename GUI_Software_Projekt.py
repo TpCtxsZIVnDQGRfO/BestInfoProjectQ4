@@ -5,6 +5,7 @@ from tkinter import *
 from tkinter import messagebox
 from tkinter.filedialog import askopenfilename, asksaveasfilename
 from Zellulare_Automaten_Simulation import *
+from NodeSimulation import *
 from ast import literal_eval
 
 import numpy as np
@@ -18,6 +19,8 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 from matplotlib import pyplot as plt
 import matplotlib.animation as animation
+
+from playsound import playsound
 
 
 # Globale Variablen
@@ -497,6 +500,450 @@ class input_simulationB:
         start_frame = Frame(master=self.frame, bg='blue')
         start_frame.pack(side='top', padx='5', pady='5', fill=X)
 
+        # Funktionen zur Einstellung einer maxlength für die Textfelder und Regulierung der erlaubten Zeichen
+        def limitSizeName(*args):
+            value = name_in.get()
+            # nicht mehr als 20 Zeichen
+            value = value[:20]
+            # löschen aller nicht erlaubten Zeichen
+            i = 0
+            while(i<len(value)):
+                if(value[i].lower() not in "abcdefghijktlmnopqrstuvwxyz _-"):
+                    value=value[:i]+value[i+1:]
+                else:
+                    i+=1
+            # Der Inhalt darf nicht mit einer " " beginnen
+            while(len(value)>0 and value[0]==" "):
+                value = value[1:]
+            name_in.set(value)
+            # Wenn kein Inhalt im Eingabefeld ist, soll intern "Untitled" gespeichert werden
+            if(len(value)==0):
+                value="Untitled"
+            self.name = value
+
+            if(toolbox[0] == self.ID):
+                fenster.title(self.name)
+                data_list[toolbox[0]][4].update_data_list()
+                simulation_menu.entryconfig(toolbox[0], label=data_list[toolbox[0]][4].name)
+        
+        def limitSizeFrames(*args):
+            value = frames_in.get()
+            # löschen aller nicht erlaubten Zeichen
+            i = 0
+            while(i<len(value)):
+                if(value[i] not in "0123456789"):
+                    value=value[:i]+value[i+1:]
+                else:
+                    i+=1
+            # Der Inhalt darf nicht mit einer 0 beginnen
+            value = value[:3]
+            # nicht mehr als drei Zeichen
+            while(len(value)>0 and value[0]=="0"):
+                value = value[1:]
+            frames_in.set(value)
+            # Wenn kein Inhalt im Eingabefeld ist, soll intern 10 gespeichert werden
+            if(len(value)==0):
+                value=10
+            self.frames = int(value)
+
+        def limitSizeNodeNumber(*args):
+            value = node_number_in.get()
+            # löschen aller nicht erlaubten Zeichen
+            i = 0
+            while(i<len(value)):
+                if(value[i] not in "0123456789"):
+                    value=value[:i]+value[i+1:]
+                else:
+                    i+=1
+            # Der Inhalt darf nicht mit einer 0 beginnen
+            value = value[:3]
+            # nicht mehr als drei Zeichen
+            while(len(value)>0 and value[0]=="0"):
+                value = value[1:]
+            node_number_in.set(value)
+            # Wenn kein Inhalt im Eingabefeld ist, soll intern 0 gespeichert werden
+            if(len(value)==0):
+                value=0
+            self.node_number = int(value)
+            if(self.node_number < self.infected_number):
+                infected_number_tf.config(bg="red")
+            else:
+                infected_number_tf.config(bg="white")
+
+        def limitSizeInfectedNumber(*args):
+            value = infected_number_in.get()
+            # löschen aller nicht erlaubten Zeichen
+            i = 0
+            while(i<len(value)):
+                if(value[i] not in "0123456789"):
+                    value=value[:i]+value[i+1:]
+                else:
+                    i+=1
+            # Der Inhalt darf nicht mit einer 0 beginnen
+            value = value[:3]
+            # nicht mehr als drei Zeichen
+            while(len(value)>0 and value[0]=="0"):
+                value = value[1:]
+            infected_number_in.set(value)
+            # Wenn kein Inhalt im Eingabefeld ist, soll intern 0 gespeichert werden
+            if(len(value)==0):
+                value=0
+            if(int(value) <= self.node_number):
+                infected_number_tf.config(bg="white")
+            else:
+                infected_number_tf.config(bg="red")
+            self.infected_number = int(value)
+
+        def limitSizeNodeSpeed(*args):
+            value = node_speed_in.get()
+            # löschen aller nicht erlaubten Zeichen
+            i = 0
+            while(i<len(value)):
+                if(value[i] not in "0123456789"):
+                    value=value[:i]+value[i+1:]
+                else:
+                    i+=1
+            # Der Inhalt darf nicht mit einer 0 beginnen
+            value = value[:2]
+            # nicht mehr als 2 Zeichen
+            while(len(value)>0 and value[0]=="0"):
+                value = value[1:]
+            node_speed_in.set(value)
+            # Wenn kein Inhalt im Eingabefeld ist, soll intern 0 gespeichert werden
+            if(len(value)==0):
+                value=0
+            self.node_speed = int(value)
+
+        def limitSizeHospitalNumber(*args):
+            value = hospital_number_in.get()
+            # löschen aller nicht erlaubten Zeichen
+            i = 0
+            while(i<len(value)):
+                if(value[i] not in "0123456789"):
+                    value=value[:i]+value[i+1:]
+                else:
+                    i+=1
+            # Der Inhalt darf nicht mit einer 0 beginnen
+            value = value[:2]
+            # nicht mehr als 2 Zeichen
+            while(len(value)>0 and value[0]=="0"):
+                value = value[1:]
+            hospital_number_in.set(value)
+            # Wenn kein Inhalt im Eingabefeld ist, soll intern 0 gespeichert werden
+            if(len(value)==0):
+                value=10
+            self.hospital_number = int(value)
+
+        def limitSizeHospitalCapacity(*args):
+            value = hospital_capacity_in.get()
+            # löschen aller nicht erlaubten Zeichen
+            i = 0
+            while(i<len(value)):
+                if(value[i] not in "0123456789"):
+                    value=value[:i]+value[i+1:]
+                else:
+                    i+=1
+            # Der Inhalt darf nicht mit einer 0 beginnen
+            value = value[:2]
+            # nicht mehr als 2 Zeichen
+            while(len(value)>0 and value[0]=="0"):
+                value = value[1:]
+            hospital_capacity_in.set(value)
+            # Wenn kein Inhalt im Eingabefeld ist, soll intern 0 gespeichert werden
+            if(len(value)==0):
+                value=0
+            self.hospital_capacity = int(value)
+
+        def limitSizeRecoveryTime(*args):
+            value = recovery_time_in.get()
+            # löschen aller nicht erlaubten Zeichen
+            i = 0
+            while(i<len(value)):
+                if(value[i] not in "0123456789"):
+                    value=value[:i]+value[i+1:]
+                else:
+                    i+=1
+            # Der Inhalt darf nicht mit einer 0 beginnen
+            value = value[:2]
+            # nicht mehr als 2 Zeichen
+            while(len(value)>0 and value[0]=="0"):
+                value = value[1:]
+            recovery_time_in.set(value)
+            # Wenn kein Inhalt im Eingabefeld ist, soll intern 0 gespeichert werden
+            if(len(value)==0):
+                value=10
+            self.recovery_time = int(value)
+
+        def limitSizeHospitalDistance(*args):
+            value = hospital_distance_in.get()
+            # löschen aller nicht erlaubten Zeichen
+            i = 0
+            while(i<len(value)):
+                if(value[i] not in "0123456789"):
+                    value=value[:i]+value[i+1:]
+                else:
+                    i+=1
+            # Der Inhalt darf nicht mit einer 0 beginnen
+            value = value[:3]
+            # nicht mehr als drei Zeichen
+            while(len(value)>0 and value[0]=="0"):
+                value = value[1:]
+            hospital_distance_in.set(value)
+            # Wenn kein Inhalt im Eingabefeld ist, soll intern 10 gespeichert werden
+            if(len(value)==0):
+                value=10
+            self.hospital_distance = int(value)
+
+        def limitSizeInfectionRadius(*args):
+            value = infection_radius_in.get()
+            # löschen aller nicht erlaubten Zeichen
+            i = 0
+            while(i<len(value)):
+                if(value[i] not in "0123456789"):
+                    value=value[:i]+value[i+1:]
+                else:
+                    i+=1
+            # Der Inhalt darf nicht mit einer 0 beginnen
+            value = value[:3]
+            # nicht mehr als drei Zeichen
+            while(len(value)>0 and value[0]=="0"):
+                value = value[1:]
+            infection_radius_in.set(value)
+            # Wenn kein Inhalt im Eingabefeld ist, soll intern 10 gespeichert werden
+            if(len(value)==0):
+                value=10
+            self.infection_radius = int(value)
+
+        def limitSizeMovementRadius(*args):
+            value = movement_radius_in.get()
+            # löschen aller nicht erlaubten Zeichen
+            i = 0
+            while(i<len(value)):
+                if(value[i] not in "0123456789"):
+                    value=value[:i]+value[i+1:]
+                else:
+                    i+=1
+            # Der Inhalt darf nicht mit einer 0 beginnen
+            value = value[:3]
+            # nicht mehr als drei Zeichen
+            while(len(value)>0 and value[0]=="0"):
+                value = value[1:]
+            movement_radius_in.set(value)
+            # Wenn kein Inhalt im Eingabefeld ist, soll intern 10 gespeichert werden
+            if(len(value)==0):
+                value=10
+            self.movement_radius = int(value)
+
+        def limitSizeBarriers(*args):
+            value = barriers_in.get()
+            # löschen aller nicht erlaubten Zeichen
+            i = 0
+            while(i<len(value)):
+                if(value[i] not in "0123456789[],"):
+                    value=value[:i]+value[i+1:]
+                else:
+                    i+=1
+            barriers_in.set(value)
+            # Überprüfung der Eingabe der Koordinaten
+            try:
+                # richtige Klammerung und Kommasetzung
+                s=literal_eval(value)
+                # Koordinatenpaare nicht länger als 4 und Koordinaten innerhalb der Grid-Länge
+                b = [len(i)==4 and i[0]<self.canvas_x and i[1]<self.canvas_y and i[2]<self.canvas_x and i[3]<self.canvas_y for i in s]
+
+                if(False not in b):
+                    barriers_tf.config(bg="white")
+                    self.barriers = s
+                else:
+                    barriers_tf.config(bg="red")
+            except:
+                barriers_tf.config(bg="red")
+
+        # Initialisierung der Textvariablen
+        name_in = StringVar()
+        name_in.trace('w',limitSizeName)
+        
+        frames_in = StringVar()
+        frames_in.trace('w',limitSizeFrames)
+        
+        node_number_in = StringVar()
+        node_number_in.trace('w',limitSizeNodeNumber)
+        
+        infected_number_in = StringVar()
+        infected_number_in.trace('w',limitSizeInfectedNumber)
+        
+        node_speed_in = StringVar()
+        node_speed_in.trace('w',limitSizeNodeSpeed)
+        
+        hospital_number_in = StringVar()
+        hospital_number_in.trace('w',limitSizeHospitalNumber)
+        
+        hospital_capacity_in = StringVar()
+        hospital_capacity_in.trace('w',limitSizeHospitalCapacity)
+        
+        recovery_time_in = StringVar()
+        recovery_time_in.trace('w',limitSizeRecoveryTime)
+        
+        hospital_distance_in = StringVar()
+        hospital_distance_in.trace('w',limitSizeHospitalDistance)
+        
+        infection_radius_in = StringVar()
+        infection_radius_in.trace('w',limitSizeInfectionRadius)
+        
+        movement_radius_in = StringVar()
+        movement_radius_in.trace('w',limitSizeMovementRadius)
+        
+        barriers_in = StringVar()
+        barriers_in.trace('w',limitSizeBarriers)
+
+        # Starten der Simulation
+        def start_button_action():
+            #start_button.config(state=DISABLED)            
+            try:
+                pos = -1
+                for i in range(len(data_list)):
+                    if(data_list[i][0] == self.ID):
+                        pos = i
+                        break
+                data_list[pos][4].update_data_list()
+                
+                # Simulation Initialisieren
+
+                
+                flowchart = np.array([[0,0.05,0],[0,0,0.00025],[0,0,0]])
+                
+                sim = Simulation([],flowchart, 5, 10, 5, 90)    # Muss noch veränderbar gemacht werden
+                
+                sim.frames = data_list[pos][2][1]
+                sim.canvas = [data_list[pos][2][12], data_list[pos][2][13]]
+                sim.resolution = [data_list[pos][2][14], data_list[pos][2][15]]
+                
+                sim.addRandomNode(data_list[pos][2][2], [1,0,0])
+                for i in range(data_list[pos][2][3]):               # Anfangsinfizierte
+                    sim.nodes[i].state = [0,1,0]
+                
+                sim.speed = data_list[pos][2][4]
+                sim.addRandomKH(data_list[pos][2][5], data_list[pos][2][6])
+                
+                sim.Behandlungsdauer = data_list[pos][2][7]
+                sim.KHWeg = data_list[pos][2][8]
+                sim.maxDist = data_list[pos][2][9]
+                sim.movementRadius = data_list[pos][2][10]
+                
+                sim.barrierColour = "red" 
+                sim.barrierWidth = 2
+                sim.connecColour = "white"
+                sim.connecWidth = 1
+
+                for i in data_list[pos][2][11]:
+                    sim.barriers.append([[i[0],i[1]],[i[2],i[3]]])
+
+                
+                frameArr = []
+                for i in range(sim.frames):
+                    sim.generate_connections()
+                    frameArr.append(np.array(sim.visualComplete()))
+                    sim.run(1)
+                    print(i)
+
+                    
+                for pic in frameArr: #Rot- und Blaukanal werden getauscht
+                    for i in range(len(pic)):
+                        pic[i][:, [2, 0]] = pic[i][:, [0, 2]]
+
+                Utility.cptv(frameArr,"video.mp4",sim.fps)
+
+                print("Das Video wurde erstellt.")
+                
+            except:
+                print("Unexpected error:", sys.exc_info()[0])
+
+            #start_button.config(state=NORMAL)
+
+        # Komponenten
+        name_tf = Entry(name_frame, width=50, relief=SOLID, textvariable=name_in, justify='center')
+        name_tf.insert(0, self.name)
+
+        frames_label = Label(label_frame, text="Frames", relief=SOLID, borderwidth = 1, anchor='w', width=30, bg='white')
+        node_number_label = Label(label_frame, text="Node number", relief=SOLID, borderwidth = 1, anchor='w', width=30, bg='white')
+        infected_number_label = Label(label_frame, text="Infected number", relief=SOLID, borderwidth = 1, anchor='w', width=30, bg='white')
+        node_speed_label = Label(label_frame, text="Node speed", relief=SOLID, borderwidth = 1, anchor='w', width=30, bg='white')
+        hospital_number_label = Label(label_frame, text="Hospital number", relief=SOLID, borderwidth = 1, anchor='w', width=30, bg='white')
+        hospital_capacity_label = Label(label_frame, text="Hospital capacity", relief=SOLID, borderwidth = 1, anchor='w', width=30, bg='white')
+        recovery_time_label = Label(label_frame, text="Recovery time (in s)", relief=SOLID, borderwidth = 1, anchor='w', width=30, bg='white')
+        hospital_distance_label = Label(label_frame, text="Hospital distance", relief=SOLID, borderwidth = 1, anchor='w', width=30, bg='white')
+        infection_radius_label = Label(label_frame, text="Infection radius", relief=SOLID, borderwidth = 1, anchor='w', width=30, bg='white')
+        movement_radius_label = Label(label_frame, text="Movement radius", relief=SOLID, borderwidth = 1, anchor='w', width=30, bg='white')
+        barriers_label = Label(label_frame, text="Barriers", relief=SOLID, borderwidth = 1, anchor='w', width=30, bg='white')
+
+        frames_tf = Entry(tf_frame, width=35, relief=SOLID, textvariable=frames_in)
+        node_number_tf = Entry(tf_frame, width=35, relief=SOLID, textvariable=node_number_in)
+        infected_number_tf = Entry(tf_frame, width=35, relief=SOLID, textvariable=infected_number_in)
+        node_speed_tf = Entry(tf_frame, width=35, relief=SOLID, textvariable=node_speed_in)
+        hospital_number_tf = Entry(tf_frame, width=35, relief=SOLID, textvariable=hospital_number_in)
+        hospital_capacity_tf = Entry(tf_frame, width=35, relief=SOLID, textvariable=hospital_capacity_in)
+        recovery_time_tf = Entry(tf_frame, width=35, relief=SOLID, textvariable=recovery_time_in)
+        hospital_distance_tf = Entry(tf_frame, width=35, relief=SOLID, textvariable=hospital_distance_in)
+        infection_radius_tf = Entry(tf_frame, width=35, relief=SOLID, textvariable=infection_radius_in)
+        movement_radius_tf = Entry(tf_frame, width=35, relief=SOLID, textvariable=movement_radius_in)
+        barriers_tf = Entry(tf_frame, width=35, relief=SOLID, textvariable=barriers_in)
+
+        # Befüllung der Textfelder mit dem Inhalt der Simulationen
+        frames_tf.insert(0, str(self.frames))
+        node_number_tf.insert(0, str(self.node_number))
+        infected_number_tf.insert(0, str(self.infected_number))
+        node_speed_tf.insert(0, str(self.node_speed))
+        hospital_number_tf.insert(0, str(self.hospital_number))
+        hospital_capacity_tf.insert(0, str(self.hospital_capacity))
+        recovery_time_tf.insert(0, str(self.recovery_time))
+        hospital_distance_tf.insert(0, str(self.hospital_distance))
+        infection_radius_tf.insert(0, str(self.infection_radius))
+        movement_radius_tf.insert(0, str(self.movement_radius))
+        barriers_tf.insert(0, str(self.barriers))
+
+        # Positionierung der Komponenten
+        start_button = Button(start_frame, text="start", command=start_button_action, width=30)
+
+        label_array = [frames_label, node_number_label, infected_number_label, node_speed_label, hospital_number_label, hospital_capacity_label, recovery_time_label, hospital_distance_label, infection_radius_label, movement_radius_label, barriers_label]
+        tf_array = [frames_tf, node_number_tf, infected_number_tf, node_speed_tf, hospital_number_tf, hospital_capacity_tf,recovery_time_tf, hospital_distance_tf, infection_radius_tf, movement_radius_tf, barriers_tf]
+
+        name_tf.pack(side=TOP, ipady=5, ipadx=10)
+
+        for i in range(len(label_array)):
+            label_array[i].pack(side=TOP, ipady=5, ipadx=10)
+
+        for i in range(len(tf_array)):
+            tf_array[i].pack(side=TOP, ipady=5, ipadx=10)
+
+        start_button.pack(ipady=5, ipadx=10)
+
+    # Methode zur Übertragung der veränderten Attribute der Simulation in das data_list-Array
+    def update_data_list(self):
+        pos = -1
+        for i in range(len(data_list)):
+            if(data_list[i][0] == self.ID):
+                pos = i
+                break
+        data_list[pos][1] = self.name
+        data_list[pos][2][1] = self.frames
+        data_list[pos][2][2] = self.node_number
+        if(self.node_number < self.infected_number):    # Damit nur theoretisch funktionierende Simulationen in data_list gespeichert werden
+            data_list[pos][2][3] = self.node_number
+        else:
+            data_list[pos][2][3] = self.infected_number
+        data_list[pos][2][4] = self.node_speed
+        data_list[pos][2][5] = self.hospital_number
+        data_list[pos][2][6] = self.hospital_capacity
+        data_list[pos][2][7] = self.recovery_time
+        data_list[pos][2][8] = self.hospital_distance
+        data_list[pos][2][9] = self.infection_radius
+        data_list[pos][2][10] = self.movement_radius
+        data_list[pos][2][11] = self.barriers
+        data_list[pos][2][12] = self.canvas_x
+        data_list[pos][2][13] = self.canvas_y
+        data_list[pos][2][14] = self.resolution_x
+        data_list[pos][2][15] = self.resolution_y
+
 
 class output_simulationA:
     def __init__(self, name, steps, len_x, len_y, sim):
@@ -561,7 +1008,7 @@ class output_simulationA:
 
         # Komponenten
 
-        time_slider = Scale(slider_frame, from_=0, to=self.steps ,tickinterval=50, orient=HORIZONTAL, length=300, command=grafic_change)
+        time_slider = Scale(slider_frame, from_=0, to=self.steps-1, tickinterval=50, orient=HORIZONTAL, length=300, command=grafic_change)
         time_slider.set(0)
         time_slider.pack(side=TOP, pady=5, padx=10)
 
@@ -606,9 +1053,9 @@ def create_typ_0_button_action():
 def create_typ_1_button_action():
     toolbox[1] += 1
     # default Werte
-    data =[0,200,200,[[100,100,110,110],[10,10]],300,0.15,0.25]
+    data =[1,30, 400, 5, 30, 3, 5, 2, 300, 50, 500, [[800,100,800,800]], 1600, 900, 1600, 900]
     # Erstellung des Frames
-    frame_simulation = input_simulationB(toolbox[1],"Untitled",data[1],data[2],data[3],data[4],data[5],data[6])
+    frame_simulation = input_simulationB(toolbox[1],"Untitled",data[1],data[2],data[3],data[4],data[5],data[6],data[7],data[8],data[9],data[10],data[11],data[12],data[13],data[14],data[15])
     frame_simulation.create_frame()
     # Hinzufügen der Simulation in das data_list-Array
     data_list.append([toolbox[1]]+["Untitled"]+[data]+[None]+[frame_simulation])
@@ -631,32 +1078,45 @@ def load_button_action():
     if not filepath:
         return
     with open(filepath, "r") as input_file:
-        # Inhalt der Text-Datei: Zeilen als Array-Einträge nehmen
-        text = input_file.read()
-        text = text.split('\n')
-        # Hochsetzen des Load-Counters
-        toolbox[1] += 1
-        # Strings aus der Text-Datei in richtige Datentypen umwandeln
-        data =[int(text[1]),int(text[2]),int(text[3]),literal_eval(text[4]),int(text[5]),float(text[6]),float(text[7])]
-        # Wenn das Rechteck-Format bei der Simulation ausgewählt wurde
-        if(data[0] == 0):
-            # Erstellung des Frames
-            frame_simulation = input_simulationA(toolbox[1],text[0],int(text[2]),int(text[3]),literal_eval(text[4]),int(text[5]),float(text[6]),float(text[7]))
+        try:
+            # Inhalt der Text-Datei: Zeilen als Array-Einträge nehmen
+            text = input_file.read()
+            text = text.split('\n')
+            # Hochsetzen des Load-Counters
+            toolbox[1] += 1
+            
+            # Wenn das Rechteck-Format bei der Simulation ausgewählt wurde
+            if(int(text[1]) == 0):
+                # Strings aus der Text-Datei in richtige Datentypen umwandeln
+                data =[int(text[1]),int(text[2]),int(text[3]),literal_eval(text[4]),int(text[5]),float(text[6]),float(text[7])]
+                # Erstellung des Frames
+                frame_simulation = input_simulationA(toolbox[1],text[0],int(text[2]),int(text[3]),literal_eval(text[4]),int(text[5]),float(text[6]),float(text[7]))
+                
+            elif(int(text[1]) == 1):
+                # Strings aus der Text-Datei in richtige Datentypen umwandeln
+                data =[int(text[1]),int(text[2]),int(text[3]),int(text[4]),int(text[5]),int(text[6]),int(text[7]),int(text[8]),int(text[9]),int(text[10]),int(text[11]),literal_eval(text[12]),int(text[13]),int(text[14]),int(text[15]),int(text[16])]
+                # Erstellung des Frames
+                frame_simulation = input_simulationB(toolbox[1],text[0],int(text[2]),int(text[3]),int(text[4]),int(text[5]),int(text[6]),int(text[7]),int(text[8]),int(text[9]),int(text[10]),int(text[11]),literal_eval(text[12]),int(text[13]),int(text[14]),int(text[15]),int(text[16]))
+
             frame_simulation.create_frame()
-        # Hinzufügen der Simulation in das data_list-Array
-        data_list.append([toolbox[1]]+[text[0]]+[data]+[filepath]+[frame_simulation])
+            # Hinzufügen der Simulation in das data_list-Array
+            data_list.append([toolbox[1]]+[text[0]]+[data]+[filepath]+[frame_simulation])
 
-        id = toolbox[1]
-        # Menübar hinzufügen zu Simulation-Menu
-        simulation_menu.add_command(label=text[0], command=lambda: action_simulation(id))
+            id = toolbox[1]
+            # Menübar hinzufügen zu Simulation-Menu
+            simulation_menu.add_command(label=text[0], command=lambda: action_simulation(id))
 
-        # Wenn mit dieser Simulation die Simulationsanzahl von 4 überschritten wird, d.h. 5 vorhanden sind, dann sollen die Buttons "Create" und "Load" disabled werden
-        if(len(data_list) > 4):
-            datei_menu.entryconfig(1, state=DISABLED)
-            datei_menu.entryconfig(0, state=DISABLED)
+            # Wenn mit dieser Simulation die Simulationsanzahl von 4 überschritten wird, d.h. 5 vorhanden sind, dann sollen die Buttons "Create" und "Load" disabled werden
+            if(len(data_list) > 4):
+                datei_menu.entryconfig(1, state=DISABLED)
+                datei_menu.entryconfig(0, state=DISABLED)
+        except:
+            m_text = "    ************************\n    Geladene Datei ist fehlerhaft\n    ************************"
+            messagebox.showinfo(message=m_text, title = "Error")
 
 # Auswerfen der aktuell ausgewählten Simulation aus dem Editor
 def dismiss_button_action():
+    playsound('Soundeffects/Blop.mp3')
     # Button aus der Menubar entfernen
     simulation_menu.delete(toolbox[0])
     # Angezeigter Frame löschen
