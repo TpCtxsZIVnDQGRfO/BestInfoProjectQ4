@@ -20,6 +20,8 @@ from matplotlib.figure import Figure
 from matplotlib import pyplot as plt
 import matplotlib.animation as animation
 
+from playsound import playsound
+
 
 # Globale Variablen
 data_list = [] # Datenstruktur: [ID, Name der Simulation, Daten Array, Filepath, Frame]
@@ -1114,6 +1116,7 @@ def load_button_action():
 
 # Auswerfen der aktuell ausgewählten Simulation aus dem Editor
 def dismiss_button_action():
+    playsound('Soundeffects/Blop.mp3')
     # Button aus der Menubar entfernen
     simulation_menu.delete(toolbox[0])
     # Angezeigter Frame löschen
