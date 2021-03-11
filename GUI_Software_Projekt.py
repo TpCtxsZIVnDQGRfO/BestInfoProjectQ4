@@ -1081,13 +1081,21 @@ def load_button_action():
         text = text.split('\n')
         # Hochsetzen des Load-Counters
         toolbox[1] += 1
-        # Strings aus der Text-Datei in richtige Datentypen umwandeln
-        data =[int(text[1]),int(text[2]),int(text[3]),literal_eval(text[4]),int(text[5]),float(text[6]),float(text[7])]
+        
         # Wenn das Rechteck-Format bei der Simulation ausgewählt wurde
-        if(data[0] == 0):
+        if(int(text[1]) == 0):
+            # Strings aus der Text-Datei in richtige Datentypen umwandeln
+            data =[int(text[1]),int(text[2]),int(text[3]),literal_eval(text[4]),int(text[5]),float(text[6]),float(text[7])]
             # Erstellung des Frames
             frame_simulation = input_simulationA(toolbox[1],text[0],int(text[2]),int(text[3]),literal_eval(text[4]),int(text[5]),float(text[6]),float(text[7]))
-            frame_simulation.create_frame()
+            
+        elif(int(text[1]) == 1):
+            # Strings aus der Text-Datei in richtige Datentypen umwandeln
+            data =[int(text[1]),int(text[2]),int(text[3]),int(text[4]),int(text[5]),int(text[6]),int(text[7]),int(text[8]),int(text[9]),int(text[10]),int(text[11]),literal_eval(text[12]),int(text[13]),int(text[14]),int(text[15]),int(text[16])]
+            # Erstellung des Frames
+            frame_simulation = input_simulationB(toolbox[1],text[0],int(text[2]),int(text[3]),int(text[4]),int(text[5]),int(text[6]),int(text[7]),int(text[8]),int(text[9]),int(text[10]),int(text[11]),literal_eval(text[12]),int(text[13]),int(text[14]),int(text[15]),int(text[16]))
+
+        frame_simulation.create_frame()
         # Hinzufügen der Simulation in das data_list-Array
         data_list.append([toolbox[1]]+[text[0]]+[data]+[filepath]+[frame_simulation])
 
