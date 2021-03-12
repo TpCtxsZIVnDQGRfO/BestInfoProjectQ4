@@ -96,9 +96,10 @@ class input_simulationA:
         # a tk.DrawingArea
         canvas = FigureCanvasTkAgg(fig, master=grafic_frame)
         canvas.get_tk_widget().pack(side=TOP, fill=BOTH, anchor='w')
+        """
         canvas.draw()
         plt.close()
-
+        """
 
         # Grafik-Update-Funktion: Wird aufgerufen, wenn der Slider bewegt wird
         def grafic_change():
@@ -126,7 +127,7 @@ class input_simulationA:
         fenster.bind('<ButtonRelease-1>', motion)
         fenster.bind('<Button-1>', motion)
         '''
-        
+
         def motion(event):
             len_x_tf.icursor("end")
             len_y_tf.icursor("end")
@@ -134,13 +135,13 @@ class input_simulationA:
             infection_tf.icursor("end")
             recovery_tf.icursor("end")
 
-        
+
         fenster.bind('<Button-1>', motion)
         fenster.bind('<ButtonRelease-1>', motion)
         fenster.bind('<Left>', motion)
         fenster.bind('<Right>', motion)
         fenster.bind('<BackSpace>', motion)
-        
+
 
         # Funktionen zur Einstellung einer maxlength für die Textfelder und Regulierung der erlaubten Zeichen
         def limitSizeX(*args):
@@ -373,7 +374,7 @@ class input_simulationA:
                 # Festlegung der anfänglichen Infizierten
                 for i in self.p0_coordinates:
                     start[i[0],i[1]] = [0,1,0]
-    
+
                 sir = simulation(start, self.steps, flow_m, flow_c)
                 sir.run()
                 sir.generate_images()
@@ -457,21 +458,21 @@ class input_simulationB:
         self.ID = ID
         self.name = name
         self.frames = frames
-        
+
         self.node_number = node_number
         self.infected_number = infected_number
         self.node_speed = node_speed
-        
+
         self.hospital_number = hospital_number
         self.hospital_capacity = hospital_capacity
         self.recovery_time = recovery_time
         self.hospital_distance = hospital_distance
-        
+
         self.infection_radius = infection_radius
         self.movement_radius = movement_radius
-        
+
         self.barriers = barriers
-        
+
         self.canvas_x = canvas_x
         self.canvas_y = canvas_y
         self.resolution_x = resolution_x
@@ -525,7 +526,7 @@ class input_simulationB:
                 fenster.title(self.name)
                 data_list[toolbox[0]][4].update_data_list()
                 simulation_menu.entryconfig(toolbox[0], label=data_list[toolbox[0]][4].name)
-        
+
         def limitSizeFrames(*args):
             value = frames_in.get()
             # löschen aller nicht erlaubten Zeichen
@@ -762,43 +763,43 @@ class input_simulationB:
         # Initialisierung der Textvariablen
         name_in = StringVar()
         name_in.trace('w',limitSizeName)
-        
+
         frames_in = StringVar()
         frames_in.trace('w',limitSizeFrames)
-        
+
         node_number_in = StringVar()
         node_number_in.trace('w',limitSizeNodeNumber)
-        
+
         infected_number_in = StringVar()
         infected_number_in.trace('w',limitSizeInfectedNumber)
-        
+
         node_speed_in = StringVar()
         node_speed_in.trace('w',limitSizeNodeSpeed)
-        
+
         hospital_number_in = StringVar()
         hospital_number_in.trace('w',limitSizeHospitalNumber)
-        
+
         hospital_capacity_in = StringVar()
         hospital_capacity_in.trace('w',limitSizeHospitalCapacity)
-        
+
         recovery_time_in = StringVar()
         recovery_time_in.trace('w',limitSizeRecoveryTime)
-        
+
         hospital_distance_in = StringVar()
         hospital_distance_in.trace('w',limitSizeHospitalDistance)
-        
+
         infection_radius_in = StringVar()
         infection_radius_in.trace('w',limitSizeInfectionRadius)
-        
+
         movement_radius_in = StringVar()
         movement_radius_in.trace('w',limitSizeMovementRadius)
-        
+
         barriers_in = StringVar()
         barriers_in.trace('w',limitSizeBarriers)
 
         # Starten der Simulation
         def start_button_action():
-            #start_button.config(state=DISABLED)            
+            #start_button.config(state=DISABLED)
             try:
                 pos = -1
                 for i in range(len(data_list)):
@@ -806,31 +807,31 @@ class input_simulationB:
                         pos = i
                         break
                 data_list[pos][4].update_data_list()
-                
+
                 # Simulation Initialisieren
 
-                
+
                 flowchart = np.array([[0,0.05,0],[0,0,0.00025],[0,0,0]])
-                
+
                 sim = Simulation([],flowchart, 5, 10, 5, 90)    # Muss noch veränderbar gemacht werden
-                
+
                 sim.frames = data_list[pos][2][1]
                 sim.canvas = [data_list[pos][2][12], data_list[pos][2][13]]
                 sim.resolution = [data_list[pos][2][14], data_list[pos][2][15]]
-                
+
                 sim.addRandomNode(data_list[pos][2][2], [1,0,0])
                 for i in range(data_list[pos][2][3]):               # Anfangsinfizierte
                     sim.nodes[i].state = [0,1,0]
-                
+
                 sim.speed = data_list[pos][2][4]
                 sim.addRandomKH(data_list[pos][2][5], data_list[pos][2][6])
-                
+
                 sim.Behandlungsdauer = data_list[pos][2][7]
                 sim.KHWeg = data_list[pos][2][8]
                 sim.maxDist = data_list[pos][2][9]
                 sim.movementRadius = data_list[pos][2][10]
-                
-                sim.barrierColour = "red" 
+
+                sim.barrierColour = "red"
                 sim.barrierWidth = 2
                 sim.connecColour = "white"
                 sim.connecWidth = 1
@@ -838,7 +839,7 @@ class input_simulationB:
                 for i in data_list[pos][2][11]:
                     sim.barriers.append([[i[0],i[1]],[i[2],i[3]]])
 
-                
+
                 frameArr = []
                 for i in range(sim.frames):
                     sim.generate_connections()
@@ -846,7 +847,7 @@ class input_simulationB:
                     sim.run(1)
                     print(i)
 
-                    
+
                 for pic in frameArr: #Rot- und Blaukanal werden getauscht
                     for i in range(len(pic)):
                         pic[i][:, [2, 0]] = pic[i][:, [0, 2]]
@@ -854,7 +855,7 @@ class input_simulationB:
                 Utility.cptv(frameArr,"video.mp4",sim.fps)
 
                 print("Das Video wurde erstellt.")
-                
+
             except:
                 print("Unexpected error:", sys.exc_info()[0])
 
@@ -1037,6 +1038,7 @@ def create_typ_0_button_action():
     # Erstellung des Frames
     frame_simulation = input_simulationA(toolbox[1],"Untitled",data[1],data[2],data[3],data[4],data[5],data[6])
     frame_simulation.create_frame()
+
     # Hinzufügen der Simulation in das data_list-Array
     data_list.append([toolbox[1]]+["Untitled"]+[data]+[None]+[frame_simulation])
 
@@ -1084,14 +1086,14 @@ def load_button_action():
             text = text.split('\n')
             # Hochsetzen des Load-Counters
             toolbox[1] += 1
-            
+
             # Wenn das Rechteck-Format bei der Simulation ausgewählt wurde
             if(int(text[1]) == 0):
                 # Strings aus der Text-Datei in richtige Datentypen umwandeln
                 data =[int(text[1]),int(text[2]),int(text[3]),literal_eval(text[4]),int(text[5]),float(text[6]),float(text[7])]
                 # Erstellung des Frames
                 frame_simulation = input_simulationA(toolbox[1],text[0],int(text[2]),int(text[3]),literal_eval(text[4]),int(text[5]),float(text[6]),float(text[7]))
-                
+
             elif(int(text[1]) == 1):
                 # Strings aus der Text-Datei in richtige Datentypen umwandeln
                 data =[int(text[1]),int(text[2]),int(text[3]),int(text[4]),int(text[5]),int(text[6]),int(text[7]),int(text[8]),int(text[9]),int(text[10]),int(text[11]),literal_eval(text[12]),int(text[13]),int(text[14]),int(text[15]),int(text[16])]
