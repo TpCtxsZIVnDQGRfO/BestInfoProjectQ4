@@ -10,8 +10,6 @@ from ast import literal_eval
 
 import numpy as np
 import time
-import threading
-
 import matplotlib
 matplotlib.use("TkAgg")
 
@@ -28,7 +26,7 @@ data_list = [] # Datenstruktur: [ID, Name der Simulation, Daten Array, Filepath,
 #  Daten Array: Simulations-Typ, x-Length, y-Length, p0_coordinates, steps, infectionrate, recoveryrate
 toolbox = [-1, -1]
 # current_simulation (-1 keine Simulation ausgewählt), Load-Counter
-
+standard_name = "Untitled"
 
 
 # Fenster initialisieren
@@ -60,6 +58,7 @@ class input_simulationA:
 
         self.frame = Frame(fenster)
         self.frame.config(bg='red')
+        self.start_button_cd_start = 0.0
 
     def create_frame(self):
         # Frames
@@ -96,10 +95,6 @@ class input_simulationA:
         # a tk.DrawingArea
         canvas = FigureCanvasTkAgg(fig, master=grafic_frame)
         canvas.get_tk_widget().pack(side=TOP, fill=BOTH, anchor='w')
-        """
-        canvas.draw()
-        plt.close()
-        """
 
         # Grafik-Update-Funktion: Wird aufgerufen, wenn der Slider bewegt wird
         def grafic_change():
@@ -325,9 +320,9 @@ class input_simulationA:
             while(len(value)>0 and value[0]==" "):
                 value = value[1:]
             name_in.set(value)
-            # Wenn kein Inhalt im Eingabefeld ist, soll intern "Untitled" gespeichert werden
+            # Wenn kein Inhalt im Eingabefeld ist, soll intern standard_name gespeichert werden
             if(len(value)==0):
-                value="Untitled"
+                value=standard_name
             self.name = value
 
             if(toolbox[0] == self.ID):
@@ -357,31 +352,45 @@ class input_simulationA:
         name_in = StringVar()
         name_in.trace('w',limitSizeName)
 
+
+
         # Starten der Simulation
         def start_button_action():
-            try:
-                # Flow-Matrix
-                flow_m = np.array([[0,1,0],[0,0,2],[0,0,0]])
-                # Ausbreitungsrate
-                infection = np.array([[1,1,1],[1,0,1],[1,1,1]])*self.infection
-                # Erholungsrate
-                recovery = np.array([self.recovery])
-                # Flow-Chart
-                flow_c = [[infection,1],[recovery,1]]
-                # Festlegung der Größe des Boards
-                start = np.zeros([self.len_x,self.len_x,3]) # Verändert für gleich große Grid-Seiten
-                start[:,:] = [1,0,0]
-                # Festlegung der anfänglichen Infizierten
-                for i in self.p0_coordinates:
-                    start[i[0],i[1]] = [0,1,0]
+            if(time.time()*1000.0 -2000 > self.start_button_cd_start):
+                self.start_button_cd_start = time.time() * 1000.0
+                start_button.config(state = DISABLED)
+                canvas.draw()
+                try:
+                    # Flow-Matrix
+                    flow_m = np.array([[0,1,0],[0,0,2],[0,0,0]])
+                    # Ausbreitungsrate
+                    infection = np.array([[1,1,1],[1,0,1],[1,1,1]])*self.infection
+                    # Erholungsrate
+                    recovery = np.array([self.recovery])
+                    # Flow-Chart
+                    flow_c = [[infection,1],[recovery,1]]
+                    # Festlegung der Größe des Boards
+                    start = np.zeros([self.len_x,self.len_x,3]) # Verändert für gleich große Grid-Seiten
+                    start[:,:] = [1,0,0]
+                    # Festlegung der anfänglichen Infizierten
+                    for i in self.p0_coordinates:
+                        start[i[0],i[1]] = [0,1,0]
 
-                sir = simulation(start, self.steps, flow_m, flow_c)
-                sir.run()
-                sir.generate_images()
-                out = output_simulationA(self.name, self.steps, self.len_x, self.len_y, sir)
+                    sir = simulation(start, self.steps, flow_m, flow_c)
+                    sir.run()
+                    sir.generate_images()
+                    while(time.time()*1000.0 -2000 < self.start_button_cd_start):
+                        pass
+                    start_button.config(state = NORMAL)
+                    canvas.draw()
+                    out = output_simulationA(self.name, self.steps, self.len_x, self.len_y, sir)
 
-            except:
-                print("Unexpected error:", sys.exc_info()[0])
+                except:
+                    #print("Unexpected error:", sys.exc_info()[0]) Dient nur dem Error-Handling
+                    pass
+
+
+
 
 
 
@@ -443,13 +452,13 @@ class input_simulationA:
         data_list[pos][2][6] = self.recovery
 
 
-'''
+
 # Code für eine Beispiel Initialisierung einer Simulation
 
-frame_test = input_simulationA(0, "Nicer Dicer", 200, 400, [[50,50],[51,351]], 150, 0.6, 0.3)
-frame_test.create_frame()
-frame_test.frame.pack(fill=BOTH, expand=True, side=BOTTOM, anchor=S)
-'''
+#frame_test = input_simulationA(0, "Nicer Dicer", 200, 400, [[50,50],[51,351]], 150, 0.6, 0.3)
+#frame_test.create_frame()
+#frame_test.frame.pack(fill=BOTH, expand=True, side=BOTTOM, anchor=S)
+
 
 #class Frame Nodes-Simulation
 class input_simulationB:
@@ -517,9 +526,9 @@ class input_simulationB:
             while(len(value)>0 and value[0]==" "):
                 value = value[1:]
             name_in.set(value)
-            # Wenn kein Inhalt im Eingabefeld ist, soll intern "Untitled" gespeichert werden
+            # Wenn kein Inhalt im Eingabefeld ist, soll intern standard_name gespeichert werden
             if(len(value)==0):
-                value="Untitled"
+                value=standard_name
             self.name = value
 
             if(toolbox[0] == self.ID):
@@ -999,6 +1008,7 @@ class output_simulationA:
 
         # Reset-Button: Führt Simulation ein weiteres Mal aus
         def reset_button_action():
+            disable_elements()
             sim.run()
             sim.generate_images()
             data = sim.images[0]
@@ -1006,6 +1016,12 @@ class output_simulationA:
             im.set_data(data)
 
             canvas.draw()
+            enable_elements()
+
+        def auto_button_action():
+            disable_elements()
+            move_slider(10000)
+            enable_elements()
 
         # Komponenten
 
@@ -1016,6 +1032,32 @@ class output_simulationA:
 
         reset_button = Button(slider_frame, text="reset", command=reset_button_action, width=15)
         reset_button.pack(side=BOTTOM, pady=5, padx=10)
+
+        auto_button = Button(slider_frame, text="auto", command=auto_button_action, width=15)
+        auto_button.pack(side=BOTTOM, pady=5, padx=10)
+
+        def disable_elements(): #deaktiviert die buttons
+            reset_button.config(state = DISABLED)
+            auto_button.config(state = DISABLED)
+            canvas.draw()
+
+
+        def enable_elements():  #aktiviert die buttons
+            reset_button.config(state = NORMAL)
+            auto_button.config(state = NORMAL)
+            canvas.draw()
+
+        def move_slider(t):  #t ist keine genaue Einheit, t gibt die ungefähre Geschwindigkeit an ~ Unterschiede nur an der Größenordnung messbar
+            t0 = time.time()*1000
+            i = time_slider.get()
+            a = 0;
+            while(i < self.steps):
+                if(time.time()*1000 >= t0+(t/self.steps)*a):
+                    time_slider.set(i)
+                    i += 1
+                    a += 1
+                    canvas.draw()
+
 
         # Fenster starten
         out_fenster.mainloop()
@@ -1036,15 +1078,15 @@ def create_typ_0_button_action():
     # default Werte
     data =[0,200,200,[[100,100,110,110],[10,10]],300,0.15,0.25]
     # Erstellung des Frames
-    frame_simulation = input_simulationA(toolbox[1],"Untitled",data[1],data[2],data[3],data[4],data[5],data[6])
+    frame_simulation = input_simulationA(toolbox[1],standard_name,data[1],data[2],data[3],data[4],data[5],data[6])
     frame_simulation.create_frame()
 
     # Hinzufügen der Simulation in das data_list-Array
-    data_list.append([toolbox[1]]+["Untitled"]+[data]+[None]+[frame_simulation])
+    data_list.append([toolbox[1]]+[standard_name]+[data]+[None]+[frame_simulation])
 
     id = toolbox[1]
     # Menübar hinzufügen zu Simulation-Menu
-    simulation_menu.add_command(label="Untitled"+str(id), command=lambda: action_simulation(id))
+    simulation_menu.add_command(label=standard_name+str(id), command=lambda: action_simulation(id))
 
     # Wenn mit dieser Simulation die Simulationsanzahl von 4 überschritten wird, d.h. 5 vorhanden sind, dann sollen die Buttons "Create" und "Load" disabled werden
     if(len(data_list) > 4):
@@ -1057,14 +1099,14 @@ def create_typ_1_button_action():
     # default Werte
     data =[1,30, 400, 5, 30, 3, 5, 2, 300, 50, 500, [[800,100,800,800]], 1600, 900, 1600, 900]
     # Erstellung des Frames
-    frame_simulation = input_simulationB(toolbox[1],"Untitled",data[1],data[2],data[3],data[4],data[5],data[6],data[7],data[8],data[9],data[10],data[11],data[12],data[13],data[14],data[15])
+    frame_simulation = input_simulationB(toolbox[1],standard_name,data[1],data[2],data[3],data[4],data[5],data[6],data[7],data[8],data[9],data[10],data[11],data[12],data[13],data[14],data[15])
     frame_simulation.create_frame()
     # Hinzufügen der Simulation in das data_list-Array
-    data_list.append([toolbox[1]]+["Untitled"]+[data]+[None]+[frame_simulation])
+    data_list.append([toolbox[1]]+[standard_name]+[data]+[None]+[frame_simulation])
 
     id = toolbox[1]
     # Menübar hinzufügen zu Simulation-Menu
-    simulation_menu.add_command(label="Untitled"+str(id), command=lambda: action_simulation(id))
+    simulation_menu.add_command(label=standard_name+str(id), command=lambda: action_simulation(id))
 
     # Wenn mit dieser Simulation die Simulationsanzahl von 4 überschritten wird, d.h. 5 vorhanden sind, dann sollen die Buttons "Create" und "Load" disabled werden
     if(len(data_list) > 4):
@@ -1119,6 +1161,7 @@ def load_button_action():
 # Auswerfen der aktuell ausgewählten Simulation aus dem Editor
 def dismiss_button_action():
     playsound('Soundeffects/Blop.mp3')
+
     # Button aus der Menubar entfernen
     simulation_menu.delete(toolbox[0])
     # Angezeigter Frame löschen
@@ -1130,6 +1173,7 @@ def dismiss_button_action():
     # "Create" und "Load" Button in der Menubar enablen, da auf jeden Fall das Maximum an Simulationen nicht mehr erreicht ist
     datei_menu.entryconfig(1, state=NORMAL)
     datei_menu.entryconfig(0, state=NORMAL)
+
 
 # Ändert Fenster-Titel und Frames: -1 ist kein Frame ausgewählt
 def set_simulation(num):
@@ -1181,6 +1225,11 @@ def save_button_action():
         data_list[toolbox[0]][3] = str(filepath)
 
 # Function, welche ausgeführt wird, wenn man in der Menubar eine Simulation auswählt
+
+def beispiel_button_action():
+    pass
+
+
 def action_simulation(id):
     # finden der Simulation im data-list-Array
     for i in range(len(data_list)):
@@ -1223,7 +1272,7 @@ bearbeiten_menu.add_command(label="Save", command=save_button_action, state=DISA
 
 # Menü "Help"
 help_menu.add_command(label="Info", command=action_get_info_dialog)
-help_menu.add_command(label="Beispiel") # noch ohne Funktion
+help_menu.add_command(label="Beispiel", command=beispiel_button_action, state=DISABLED) # noch ohne Funktion
 
 # Menüs der Menüleiste hinzufügen
 menuleiste.add_cascade(label="Datei", menu=datei_menu)
