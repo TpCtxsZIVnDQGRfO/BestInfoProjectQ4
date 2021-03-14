@@ -24,9 +24,11 @@ from playsound import playsound
 # Globale Variablen
 data_list = [] # Datenstruktur: [ID, Name der Simulation, Daten Array, Filepath, Frame]
 #  Daten Array: Simulations-Typ, x-Length, y-Length, p0_coordinates, steps, infectionrate, recoveryrate
-toolbox = [-1, -1]
+toolbox = [-1, 0, 0]
+beispiel_created = False
 # current_simulation (-1 keine Simulation ausgewählt), Load-Counter
 standard_name = "Untitled"
+
 
 
 # Fenster initialisieren
@@ -46,7 +48,7 @@ fenster.geometry("675x675")
 
 #class Frame Rechteck
 class input_simulationA:
-    def __init__(self, ID, name, len_x, len_y, p0_coordinates, steps, infection, recovery):
+    def __init__(self, ID, name, len_x, len_y, p0_coordinates, steps, infection, recovery, design_preset):
         self.ID = ID
         self.name = name
         self.len_x = len_x
@@ -56,28 +58,30 @@ class input_simulationA:
         self.infection = infection
         self.recovery = recovery
 
+        self.design_preset = design_preset
+
         self.frame = Frame(fenster)
-        self.frame.config(bg='gray')
+        self.frame.config(bg=self.design_preset[0])
         self.start_button_cd_start = 0.0
 
     def create_frame(self):
         # Frames
-        grafic_frame = Frame(master=self.frame, bg='green')
+        grafic_frame = Frame(master=self.frame, bg=self.design_preset[1])
         grafic_frame.pack(side=TOP, padx='5', pady='5', fill=BOTH)
 
-        name_frame = Frame(master=self.frame, bg='gray')
+        name_frame = Frame(master=self.frame, bg=self.design_preset[2])
         name_frame.pack(side='top', padx='5', pady='5', fill=X)
 
-        components_frame = Frame(master=self.frame, bg='gray')
+        components_frame = Frame(master=self.frame, bg=self.design_preset[3])
         components_frame.pack(padx='5', pady='5', fill=X)
 
-        label_frame = Frame(master=components_frame, bg='magenta')
+        label_frame = Frame(master=components_frame, bg=self.design_preset[4])
         label_frame.pack(side='left', padx='5', pady='5')
 
-        tf_frame = Frame(master=components_frame, bg='red')
+        tf_frame = Frame(master=components_frame, bg=self.design_preset[5])
         tf_frame.pack(side='right', padx='5', pady='5')
 
-        start_frame = Frame(master=self.frame, bg='gray')
+        start_frame = Frame(master=self.frame, bg=self.design_preset[6])
         start_frame.pack(side='top', padx='5', pady='5', fill=X)
 
 
@@ -105,11 +109,11 @@ class input_simulationA:
                     data[i[0],i[1]] = [0,1,0]
 
                 im.set_data(data)
-                len_x_tf.config(bg="white")
+                len_x_tf.config(bg=self.design_preset[7])
                 #p0_coordinates_tf.config(bg="white")
 
             except:
-                len_x_tf.config(bg="red")
+                len_x_tf.config(bg=self.design_preset[8])
                 #p0_coordinates_tf.config(bg="red")
 
             canvas.draw()
@@ -452,14 +456,6 @@ class input_simulationA:
         data_list[pos][2][6] = self.recovery
 
 
-
-# Code für eine Beispiel Initialisierung einer Simulation
-
-#frame_test = input_simulationA(0, "Nicer Dicer", 200, 400, [[50,50],[51,351]], 150, 0.6, 0.3)
-#frame_test.create_frame()
-#frame_test.frame.pack(fill=BOTH, expand=True, side=BOTTOM, anchor=S)
-
-
 #class Frame Nodes-Simulation
 class input_simulationB:
     # Startbedingungen der Nodes, flowchart, Größe des Canvas, Auflösung der Visualisierung, Farben der Nodes in den verschiedenen Zuständen, Geschwindigkeit der Nodes, Framerate des Videos, Videolänge, Anzahl und Positionen der Barrieren, maximale Entfernung, mit der zwei Nodes noch verbunden sind, Maximalabstand, den Nodes zu ihrem Startpunkt haben können, Visuals der Barrieren und Verbindungen
@@ -487,29 +483,29 @@ class input_simulationB:
         self.resolution_x = resolution_x
         self.resolution_y = resolution_y
 
+        self.design_preset = get_design_preset()
+
         self.frame = Frame(fenster)
         self.frame.config(bg='gray')
 
     def create_frame(self):
         # Frames
-        
-        # Potenzieller Frame für eine Vorschau
-        #grafic_frame = Frame(master=self.frame, bg='green')
-        #grafic_frame.pack(side=TOP, padx='5', pady='5', fill=BOTH)
+        grafic_frame = Frame(master=self.frame, bg=self.design_preset[2])
+        grafic_frame.pack(side=TOP, padx='5', pady='5', fill=BOTH)
 
-        name_frame = Frame(master=self.frame, bg='gray')
+        name_frame = Frame(master=self.frame, bg=self.design_preset[3])
         name_frame.pack(side='top', padx='5', pady='5', fill=X)
 
-        components_frame = Frame(master=self.frame, bg='gray')
+        components_frame = Frame(master=self.frame, bg=self.design_preset[4])
         components_frame.pack(padx='5', pady='5', fill=X)
 
-        label_frame = Frame(master=components_frame, bg='magenta')
+        label_frame = Frame(master=components_frame, bg=self.design_preset[5])
         label_frame.pack(side='left', padx='5', pady='5')
 
-        tf_frame = Frame(master=components_frame, bg='red')
+        tf_frame = Frame(master=components_frame, bg=self.design_preset[6])
         tf_frame.pack(side='right', padx='5', pady='5')
 
-        start_frame = Frame(master=self.frame, bg='gray')
+        start_frame = Frame(master=self.frame, bg=self.design_preset[7])
         start_frame.pack(side='top', padx='5', pady='5', fill=X)
 
         # Funktionen zur Einstellung einer maxlength für die Textfelder und Regulierung der erlaubten Zeichen
@@ -965,6 +961,8 @@ class output_simulationA:
         self.len_y = len_y
         self.sim = sim # Simulation
 
+        self.design_preset = design_preset
+
         # Fenster initialisieren
         out_fenster = Tk()
         out_fenster.title(self.name)
@@ -1080,7 +1078,7 @@ def create_typ_0_button_action():
     # default Werte
     data =[0,200,200,[[100,100,110,110],[10,10]],300,0.15,0.25]
     # Erstellung des Frames
-    frame_simulation = input_simulationA(toolbox[1],standard_name,data[1],data[2],data[3],data[4],data[5],data[6])
+    frame_simulation = input_simulationA(toolbox[1],standard_name,data[1],data[2],data[3],data[4],data[5],data[6],get_design_preset())
     frame_simulation.create_frame()
 
     # Hinzufügen der Simulation in das data_list-Array
@@ -1136,7 +1134,7 @@ def load_button_action():
                 # Strings aus der Text-Datei in richtige Datentypen umwandeln
                 data =[int(text[1]),int(text[2]),int(text[3]),literal_eval(text[4]),int(text[5]),float(text[6]),float(text[7])]
                 # Erstellung des Frames
-                frame_simulation = input_simulationA(toolbox[1],text[0],int(text[2]),int(text[3]),literal_eval(text[4]),int(text[5]),float(text[6]),float(text[7]))
+                frame_simulation = input_simulationA(toolbox[1],text[0],int(text[2]),int(text[3]),literal_eval(text[4]),int(text[5]),float(text[6]),float(text[7]), get_design_preset())
 
             elif(int(text[1]) == 1):
                 # Strings aus der Text-Datei in richtige Datentypen umwandeln
@@ -1228,8 +1226,13 @@ def save_button_action():
 
 # Function, welche ausgeführt wird, wenn man in der Menubar eine Simulation auswählt
 
-def beispiel_button_action():
-    pass
+def beispiel_button_action():  #TODO
+    if(beispiel_created == False):
+        frame_simulation = input_simulationA(0, "Nicer Dicer", 200, 400, [[50,50],[51,351]], 150, 0.6, 0.3, get_design_preset())
+        data = [0, 200, 400, [[50,50],[51,351]], 150, 0.6, 0.3]
+        frame_simulation.create_frame()
+        data_list.append([0]+["Nicer Dicer"]+[data]+[None]+[frame_simulation])
+    action_simulation(0)
 
 
 def action_simulation(id):
@@ -1240,6 +1243,38 @@ def action_simulation(id):
             break
 
     set_simulation(pos)
+
+def sim_color_settings_action():
+    pass
+
+
+
+light_mode_preset = ['#F1EEC7','#F1EEC7','#F1EEC7','#F1EEC7','#F1EEC7','red','#F1EEC7','white','red']
+dark_mode_preset = ['grey','black','grey','grey','grey','red','#F1EEC7','grey','red']
+
+def get_design_preset():
+    switcher = {
+        0: light_mode_preset,
+        1: dark_mode_preset
+    }
+    return switcher.get(toolbox[2])
+
+def set_light_mode_action():
+    toolbox[2] = 0
+    update_design_preset()
+
+def set_dark_mode_action():
+    toolbox[2] = 1
+    update_design_preset()
+
+def update_design_preset():
+    for i in range(0,toolbox[1]):
+        data_list[toolbox[0]][4].frame.pack_forget()
+        if data_list[i][2][0] == 0:
+            frame_simulation = input_simulationA(data_list[i][0], data_list[i][1], data_list[i][4].len_x, data_list[i][4].len_y, data_list[i][4].p0_coordinates,data_list[i][4].steps,data_list[i][4].infection,data_list[i][4].recovery, get_design_preset())
+            frame_simulation.create_frame()
+            data_list[i][4] = frame_simulation
+    set_simulation(toolbox[0])
 
 # Schließen des Programmes
 def exit_action():
@@ -1266,6 +1301,15 @@ create_menu.add_command(label="Typ 0", command=create_typ_0_button_action)
 create_menu.add_command(label="Typ 1", command=create_typ_1_button_action)
 datei_menu.add_command(label="Load", command=load_button_action)
 datei_menu.add_separator() # Fügt eine Trennlinie hinzu
+# Untermenü "Settings" erstelle
+settings_menu = Menu(datei_menu, tearoff=0)
+datei_menu.add_cascade(label="Settings", menu=settings_menu)
+settings_menu.add_command(label="Simulationcolors", command=sim_color_settings_action)
+design_settings_menu = Menu(settings_menu, tearoff=0)
+settings_menu.add_cascade(label="Design-Settings", menu=design_settings_menu)
+design_settings_menu.add_command(label="Light-Mode", command=set_light_mode_action)
+design_settings_menu.add_command(label="Dark-Mode", command=set_dark_mode_action)
+datei_menu.add_separator() # Fügt eine Trennlinie hinzu
 datei_menu.add_command(label="Exit", command=exit_action)
 
 # Menü "Bearbeiten"
@@ -1274,7 +1318,7 @@ bearbeiten_menu.add_command(label="Save", command=save_button_action, state=DISA
 
 # Menü "Help"
 help_menu.add_command(label="Info", command=action_get_info_dialog)
-help_menu.add_command(label="Beispiel", command=beispiel_button_action, state=DISABLED) # noch ohne Funktion
+help_menu.add_command(label="Beispiel", command=beispiel_button_action)
 
 # Menüs der Menüleiste hinzufügen
 menuleiste.add_cascade(label="Datei", menu=datei_menu)
