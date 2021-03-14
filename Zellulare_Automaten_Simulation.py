@@ -138,9 +138,9 @@ class simulation:
         graph = np.sum(self.data, (1, 2))
         return graph.transpose()
 
-    def generate_images(self):
+    def generate_colors(self):
         '''
-        Generiert die RGB-Bilder für ein beliebige Simulation
+        Die Farben für die Image Generation
         mxnxk --> mxnx3
         '''
         self.images = np.zeros(list(self.data.shape[:3]) + [3])
@@ -150,8 +150,7 @@ class simulation:
             colors[i][0] = i * 1 / self.data.shape[3]
             colors[i][1] = 1 - i * 1 / self.data.shape[3]
             colors[i][2] = 1 - i * 1 / self.data.shape[3]
-        for i in range(self.data.shape[3]):
-            self.images[self.data[:, :, :, i] == 1] = colors[i]
+        return colors
 
     def generate_images(self, colors):
         """
