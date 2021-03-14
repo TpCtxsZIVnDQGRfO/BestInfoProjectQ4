@@ -57,7 +57,7 @@ class input_simulationA:
         self.recovery = recovery
 
         self.frame = Frame(fenster)
-        self.frame.config(bg='red')
+        self.frame.config(bg='gray')
         self.start_button_cd_start = 0.0
 
     def create_frame(self):
@@ -65,10 +65,10 @@ class input_simulationA:
         grafic_frame = Frame(master=self.frame, bg='green')
         grafic_frame.pack(side=TOP, padx='5', pady='5', fill=BOTH)
 
-        name_frame = Frame(master=self.frame, bg='yellow')
+        name_frame = Frame(master=self.frame, bg='gray')
         name_frame.pack(side='top', padx='5', pady='5', fill=X)
 
-        components_frame = Frame(master=self.frame, bg='green')
+        components_frame = Frame(master=self.frame, bg='gray')
         components_frame.pack(padx='5', pady='5', fill=X)
 
         label_frame = Frame(master=components_frame, bg='magenta')
@@ -77,7 +77,7 @@ class input_simulationA:
         tf_frame = Frame(master=components_frame, bg='red')
         tf_frame.pack(side='right', padx='5', pady='5')
 
-        start_frame = Frame(master=self.frame, bg='blue')
+        start_frame = Frame(master=self.frame, bg='gray')
         start_frame.pack(side='top', padx='5', pady='5', fill=X)
 
 
@@ -488,17 +488,19 @@ class input_simulationB:
         self.resolution_y = resolution_y
 
         self.frame = Frame(fenster)
-        self.frame.config(bg='red')
+        self.frame.config(bg='gray')
 
     def create_frame(self):
         # Frames
-        grafic_frame = Frame(master=self.frame, bg='green')
-        grafic_frame.pack(side=TOP, padx='5', pady='5', fill=BOTH)
+        
+        # Potenzieller Frame für eine Vorschau
+        #grafic_frame = Frame(master=self.frame, bg='green')
+        #grafic_frame.pack(side=TOP, padx='5', pady='5', fill=BOTH)
 
-        name_frame = Frame(master=self.frame, bg='yellow')
+        name_frame = Frame(master=self.frame, bg='gray')
         name_frame.pack(side='top', padx='5', pady='5', fill=X)
 
-        components_frame = Frame(master=self.frame, bg='green')
+        components_frame = Frame(master=self.frame, bg='gray')
         components_frame.pack(padx='5', pady='5', fill=X)
 
         label_frame = Frame(master=components_frame, bg='magenta')
@@ -507,7 +509,7 @@ class input_simulationB:
         tf_frame = Frame(master=components_frame, bg='red')
         tf_frame.pack(side='right', padx='5', pady='5')
 
-        start_frame = Frame(master=self.frame, bg='blue')
+        start_frame = Frame(master=self.frame, bg='gray')
         start_frame.pack(side='top', padx='5', pady='5', fill=X)
 
         # Funktionen zur Einstellung einer maxlength für die Textfelder und Regulierung der erlaubten Zeichen
@@ -967,7 +969,7 @@ class output_simulationA:
         out_fenster = Tk()
         out_fenster.title(self.name)
         out_fenster.resizable(0, 0)
-        out_fenster.config(bg='white')
+        out_fenster.config(bg='gray')
 
         # Fenstergröße
         out_fenster.geometry("600x600")
@@ -977,7 +979,7 @@ class output_simulationA:
         grafic_frame = Frame(master=out_fenster, bg='green')
         grafic_frame.pack(padx='5', pady='5', fill=X)
 
-        slider_frame = Frame(master=out_fenster, bg='red')
+        slider_frame = Frame(master=out_fenster, bg='gray')
         slider_frame.pack(side='bottom', padx='5', pady='5', fill=X)
 
         # Grafik
