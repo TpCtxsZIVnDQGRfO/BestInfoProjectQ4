@@ -38,11 +38,7 @@ fenster.config(bg='white')
 # Fenstergröße
 fenster.geometry("675x675")
 
-# To-Do-List
-# - weiß werden der p0_coordinates_tf bzw. rot werden
-# - Speicherung der p0_coordinates in schönem Format zum Wiederöffnen
-# - Bug bei Copy-Pasting in Infection-Field
-
+'''Das Frame enthält Ansätze für eine Erweiterung der Simulationsframeeinstellungen in y-Richtung. Jedoch konnten wir das Problem mit der Verzerrung der Pixel vorerst nicht lösen und haben deshalb unsere Zeit erst einmal in andere Features gesteckt.'''
 
 #class Frame Rechteck
 class input_simulationA:
@@ -58,7 +54,7 @@ class input_simulationA:
 
         self.frame = Frame(fenster)
         self.frame.config(bg='gray')
-        self.start_button_cd_start = 0.0
+        self.start_button_cd_start = 0.0                # Nötig für einen Cooldown des Start-Buttons
 
     def create_frame(self):
         # Frames
@@ -92,37 +88,28 @@ class input_simulationA:
         ax.set_xticks([0])
         ax.set_yticks([0])
 
-        # a tk.DrawingArea
+        # eine tk.DrawingArea
         canvas = FigureCanvasTkAgg(fig, master=grafic_frame)
         canvas.get_tk_widget().pack(side=TOP, fill=BOTH, anchor='w')
 
-        # Grafik-Update-Funktion: Wird aufgerufen, wenn der Slider bewegt wird
+        # Grafik-Update-Funktion: Wird aufgerufen, wenn die p0_coordinates verändert werden oder die Grafikgröße
         def grafic_change():
+            #Versucht die Grafik an die Parameteränderung anzupassen, ansonsten wird das Grafikgrößenfeld rot gefärbt
             try:
-                data = np.zeros([self.len_x,self.len_x,3]) # Verändert für gleich große Grid-Seiten
+                data = np.zeros([self.len_x,self.len_x,3]) # kann durch Veränderung zu self.len_y an neues Feature angepasst werden
                 data[:,:] = [1,0,0]
                 for i in self.p0_coordinates:
                     data[i[0],i[1]] = [0,1,0]
 
                 im.set_data(data)
-                len_x_tf.config(bg="white")
-                #p0_coordinates_tf.config(bg="white")
+                len_x_tf.config(bg="white") # kann durch Hinzufügen von len_y_tf.config(...) an neues Feature angepasst werden
 
             except:
                 len_x_tf.config(bg="red")
-                #p0_coordinates_tf.config(bg="red")
 
             canvas.draw()
 
-        '''# Erstmal nicht in Benutzung
-        def motion(event):
-            x, y = event.x, event.y
-            print([x,y])
-
-        fenster.bind('<ButtonRelease-1>', motion)
-        fenster.bind('<Button-1>', motion)
-        '''
-
+        # Setzt den Cursor in den Textfeldern ans Ende, um einen Bug mit den Prefixes wie "0." bei recovery_tf zu lösen
         def motion(event):
             len_x_tf.icursor("end")
             len_y_tf.icursor("end")
@@ -354,8 +341,9 @@ class input_simulationA:
 
 
 
-        # Starten der Simulation
+        # Starten der Simulation und des Ausgabefensters
         def start_button_action():
+            # Cooldown für den Button
             if(time.time()*1000.0 -2000 > self.start_button_cd_start):
                 self.start_button_cd_start = time.time() * 1000.0
                 start_button.config(state = DISABLED)
@@ -383,10 +371,11 @@ class input_simulationA:
                         pass
                     start_button.config(state = NORMAL)
                     canvas.draw()
+                    # Initialisierung Ausgabefenster
                     out = output_simulationA(self.name, self.steps, self.len_x, self.len_y, sir)
 
                 except:
-                    #print("Unexpected error:", sys.exc_info()[0]) Dient nur dem Error-Handling
+                    #print("Unexpected error:", sys.exc_info()[0]) # Dient nur dem Error-Handling
                     pass
 
 
@@ -398,7 +387,7 @@ class input_simulationA:
         name_tf = Entry(name_frame, width=50, relief=SOLID, textvariable=name_in, justify='center')
         name_tf.insert(0, self.name)
 
-        len_x_label = Label(label_frame, text="Grid-Length", relief=SOLID, borderwidth = 1, anchor='w', width=30, bg='white') # Verändert für gleich große Grid-Seiten
+        len_x_label = Label(label_frame, text="Grid-Length", relief=SOLID, borderwidth = 1, anchor='w', width=30, bg='white') # Text Veränderung bis Implementation einstellbare y-Länge
         len_y_label = Label(label_frame, text="Grid-Length-y", relief=SOLID, borderwidth = 1, anchor='w', width=30, bg='white')
         p0_coordinates_label = Label(label_frame, text="p0-Coordinates", relief=SOLID, borderwidth = 1, anchor='w', width=30, bg='white')
         steps_label = Label(label_frame, text="Stepnumber", relief=SOLID, borderwidth = 1, anchor='w', width=30, bg='white')
@@ -423,8 +412,8 @@ class input_simulationA:
         # Positionierung der Komponenten
         start_button = Button(start_frame, text="start", command=start_button_action, width=30)
 
-        label_array = [len_x_label, steps_label, infection_label, recovery_label, p0_coordinates_label] # Verändert für gleich große Grid-Seiten
-        tf_array = [len_x_tf, steps_tf, infection_tf, recovery_tf, p0_coordinates_tf] # Verändert für gleich große Grid-Seiten
+        label_array = [len_x_label, steps_label, infection_label, recovery_label, p0_coordinates_label] # Durch hinzufügen von len_y_label bzw. ..._tf an kommendes Feature anpassbar
+        tf_array = [len_x_tf, steps_tf, infection_tf, recovery_tf, p0_coordinates_tf]
 
         name_tf.pack(side=TOP, ipady=5, ipadx=10)
 
@@ -454,11 +443,11 @@ class input_simulationA:
 
 
 # Code für eine Beispiel Initialisierung einer Simulation
-
-#frame_test = input_simulationA(0, "Nicer Dicer", 200, 400, [[50,50],[51,351]], 150, 0.6, 0.3)
-#frame_test.create_frame()
-#frame_test.frame.pack(fill=BOTH, expand=True, side=BOTTOM, anchor=S)
-
+'''
+frame_test = input_simulationA(0, "Nicer Dicer", 200, 400, [[50,50],[51,351]], 150, 0.6, 0.3)
+frame_test.create_frame()
+frame_test.frame.pack(fill=BOTH, expand=True, side=BOTTOM, anchor=S)
+'''
 
 #class Frame Nodes-Simulation
 class input_simulationB:
@@ -763,6 +752,7 @@ class input_simulationB:
                 # Koordinatenpaare nicht länger als 4 und Koordinaten innerhalb der Grid-Länge
                 b = [len(i)==4 and i[0]<self.canvas_x and i[1]<self.canvas_y and i[2]<self.canvas_x and i[3]<self.canvas_y for i in s]
 
+                # Einfärbung bei Fehler
                 if(False not in b):
                     barriers_tf.config(bg="white")
                     self.barriers = s
@@ -771,7 +761,7 @@ class input_simulationB:
             except:
                 barriers_tf.config(bg="red")
 
-        # Initialisierung der Textvariablen
+        # Initialisierung der Textvariablen und obigen Überprüfungsmethoden
         name_in = StringVar()
         name_in.trace('w',limitSizeName)
 
@@ -810,8 +800,8 @@ class input_simulationB:
 
         # Starten der Simulation
         def start_button_action():
-            #start_button.config(state=DISABLED)
             try:
+                # Um Bugs mit der Variable der aktuellen Simulation im toolbox-Array und der sichtbaren Simulation bei Lags des Programmes zu vermeiden
                 pos = -1
                 for i in range(len(data_list)):
                     if(data_list[i][0] == self.ID):
@@ -847,10 +837,11 @@ class input_simulationB:
                 sim.connecColour = "white"
                 sim.connecWidth = 1
 
+                # Daten in richtige Form bringen wie es das Node-Simulationsskript benötigt
                 for i in data_list[pos][2][11]:
                     sim.barriers.append([[i[0],i[1]],[i[2],i[3]]])
 
-
+                # Erstellung der Frames
                 frameArr = []
                 for i in range(sim.frames):
                     sim.generate_connections()
@@ -869,8 +860,6 @@ class input_simulationB:
 
             except:
                 print("Unexpected error:", sys.exc_info()[0])
-
-            #start_button.config(state=NORMAL)
 
         # Komponenten
         name_tf = Entry(name_frame, width=50, relief=SOLID, textvariable=name_in, justify='center')
@@ -962,7 +951,7 @@ class output_simulationA:
         self.name = name
         self.steps = steps
         self.len_x = len_x
-        self.len_y = len_y
+        self.len_y = len_y  # Bereits initialisiert aber noch nicht in Verwendung bis zur BEhebung der oben angesprochenen Verzerrung
         self.sim = sim # Simulation
 
         # Fenster initialisieren
@@ -987,7 +976,7 @@ class output_simulationA:
 
         image = data
         fig = plt.figure(figsize=(5,4))
-        im = plt.imshow(image) # later use a.set_data(new_data)
+        im = plt.imshow(image) # später updatebar mit im.set_data(new_data)
         ax = plt.gca()
         ax.set_xticks([0])
         ax.set_yticks([0])
@@ -995,7 +984,7 @@ class output_simulationA:
         #ax.set_yticklabels([100,100])
 
         plt.suptitle (self.name, fontsize=16)
-        # a tk.DrawingArea
+        # eine tk.DrawingArea
         canvas = FigureCanvasTkAgg(fig, master=grafic_frame)
         canvas.get_tk_widget().pack(fill=BOTH, expand=1)
         canvas.draw()
@@ -1138,6 +1127,7 @@ def load_button_action():
                 # Erstellung des Frames
                 frame_simulation = input_simulationA(toolbox[1],text[0],int(text[2]),int(text[3]),literal_eval(text[4]),int(text[5]),float(text[6]),float(text[7]))
 
+            # Wenn eine Node-Simulation geladen wird
             elif(int(text[1]) == 1):
                 # Strings aus der Text-Datei in richtige Datentypen umwandeln
                 data =[int(text[1]),int(text[2]),int(text[3]),int(text[4]),int(text[5]),int(text[6]),int(text[7]),int(text[8]),int(text[9]),int(text[10]),int(text[11]),literal_eval(text[12]),int(text[13]),int(text[14]),int(text[15]),int(text[16])]
@@ -1145,6 +1135,7 @@ def load_button_action():
                 frame_simulation = input_simulationB(toolbox[1],text[0],int(text[2]),int(text[3]),int(text[4]),int(text[5]),int(text[6]),int(text[7]),int(text[8]),int(text[9]),int(text[10]),int(text[11]),literal_eval(text[12]),int(text[13]),int(text[14]),int(text[15]),int(text[16]))
 
             frame_simulation.create_frame()
+            
             # Hinzufügen der Simulation in das data_list-Array
             data_list.append([toolbox[1]]+[text[0]]+[data]+[filepath]+[frame_simulation])
 
@@ -1157,11 +1148,13 @@ def load_button_action():
                 datei_menu.entryconfig(1, state=DISABLED)
                 datei_menu.entryconfig(0, state=DISABLED)
         except:
+            # Fehler Pop-up
             m_text = "    ************************\n    Geladene Datei ist fehlerhaft\n    ************************"
             messagebox.showinfo(message=m_text, title = "Error")
 
 # Auswerfen der aktuell ausgewählten Simulation aus dem Editor
 def dismiss_button_action():
+    # Soundeffekt
     playsound('Soundeffects/Blop.mp3')
 
     # Button aus der Menubar entfernen
@@ -1177,7 +1170,7 @@ def dismiss_button_action():
     datei_menu.entryconfig(0, state=NORMAL)
 
 
-# Ändert Fenster-Titel und Frames: -1 ist kein Frame ausgewählt
+# Ändert Fenster-Titel und Frames, -1: kein Frame ist ausgewählt
 def set_simulation(num):
     # Zurücksetzen des aktuellen Frames, außer wenn keiner ausgewählt ist
     if(num > -1 and toolbox[0] != -1):
@@ -1226,8 +1219,7 @@ def save_button_action():
         # Falls gerade erst ein Dateipfad ausgewählt wurde, soll dieser hinterlegt werden, um beim nächsten Speichern nicht die Datei neu zu speichern, sondern die Datei einfach zu updaten
         data_list[toolbox[0]][3] = str(filepath)
 
-# Function, welche ausgeführt wird, wenn man in der Menubar eine Simulation auswählt
-
+# Ansatz für eine potentielle Tutorial Simulation um mit den Einstellungen vertraut zu werden
 def beispiel_button_action():
     pass
 
@@ -1290,4 +1282,4 @@ fenster.config(menu=menuleiste)
 fenster.mainloop()
 
 
-print(data_list) # Für Testzwecke
+#print(data_list) # Für Testzwecke
