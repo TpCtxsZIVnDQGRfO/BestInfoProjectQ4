@@ -44,7 +44,7 @@ fenster.geometry("675x675")
 
 #class Frame Rechteck
 class input_simulationA:
-    def __init__(self, ID, name, len_x, len_y, p0_coordinates, steps, infection, recovery, design_preset):
+    def __init__(self, ID, name, len_x, len_y, p0_coordinates, steps, infection, recovery):
         self.ID = ID
         self.name = name
         self.len_x = len_x
@@ -54,7 +54,7 @@ class input_simulationA:
         self.infection = infection
         self.recovery = recovery
 
-        self.design_preset = design_preset
+        self.design_preset = get_design_preset()
 
         self.frame = Frame(fenster)
         self.frame.config(bg=self.design_preset[0])
@@ -949,7 +949,7 @@ class output_simulationA:
         self.len_y = len_y # Bereits initialisiert aber noch nicht in Verwendung bis zur Behebung der oben angesprochenen Verzerrung
         self.sim = sim # Simulation
 
-        self.design_preset = design_preset
+        self.design_preset = get_design_preset()
 
         # Fenster initialisieren
         out_fenster = Tk()
@@ -1066,7 +1066,7 @@ def create_typ_0_button_action():
     # default Werte
     data =[0,200,200,[[100,100,110,110],[10,10]],300,0.15,0.25]
     # Erstellung des Frames
-    frame_simulation = input_simulationA(toolbox[1],standard_name,data[1],data[2],data[3],data[4],data[5],data[6],get_design_preset())
+    frame_simulation = input_simulationA(toolbox[1],standard_name,data[1],data[2],data[3],data[4],data[5],data[6])
     frame_simulation.create_frame()
 
     # Hinzufügen der Simulation in das data_list-Array
@@ -1122,7 +1122,7 @@ def load_button_action():
                 # Strings aus der Text-Datei in richtige Datentypen umwandeln
                 data =[int(text[1]),int(text[2]),int(text[3]),literal_eval(text[4]),int(text[5]),float(text[6]),float(text[7])]
                 # Erstellung des Frames
-                frame_simulation = input_simulationA(toolbox[1],text[0],int(text[2]),int(text[3]),literal_eval(text[4]),int(text[5]),float(text[6]),float(text[7]), get_design_preset())
+                frame_simulation = input_simulationA(toolbox[1],text[0],int(text[2]),int(text[3]),literal_eval(text[4]),int(text[5]),float(text[6]),float(text[7]))
             # Wenn eine Node-Simulation geladen wird
             elif(int(text[1]) == 1):
                 # Strings aus der Text-Datei in richtige Datentypen umwandeln
@@ -1218,7 +1218,7 @@ def save_button_action():
 # Ansatz für eine potentielle Tutorial Simulation um mit den Einstellungen vertraut zu werden
 def beispiel_button_action():  #TODO
     if(beispiel_created == False):
-        frame_simulation = input_simulationA(0, "Nicer Dicer", 200, 400, [[50,50],[51,351]], 150, 0.6, 0.3, get_design_preset())
+        frame_simulation = input_simulationA(0, "Nicer Dicer", 200, 400, [[50,50],[51,351]], 150, 0.6, 0.3)
         data = [0, 200, 400, [[50,50],[51,351]], 150, 0.6, 0.3]
         frame_simulation.create_frame()
         data_list.append([0]+["Nicer Dicer"]+[data]+[None]+[frame_simulation])
@@ -1261,7 +1261,7 @@ def update_design_preset():
     for i in range(0,toolbox[1]):
         data_list[toolbox[0]][4].frame.pack_forget()
         if data_list[i][2][0] == 0:
-            frame_simulation = input_simulationA(data_list[i][0], data_list[i][1], data_list[i][4].len_x, data_list[i][4].len_y, data_list[i][4].p0_coordinates,data_list[i][4].steps,data_list[i][4].infection,data_list[i][4].recovery, get_design_preset())
+            frame_simulation = input_simulationA(data_list[i][0], data_list[i][1], data_list[i][4].len_x, data_list[i][4].len_y, data_list[i][4].p0_coordinates,data_list[i][4].steps,data_list[i][4].infection,data_list[i][4].recovery)
             frame_simulation.create_frame()
             data_list[i][4] = frame_simulation
     set_simulation(toolbox[0])
