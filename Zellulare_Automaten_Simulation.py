@@ -1,3 +1,4 @@
+
 import numpy as np
 import matplotlib.pyplot as plt
 import math
@@ -319,4 +320,3 @@ Beispielinitialisierung für Conways game of life
 # for i in range(conways.iterations):
 #     plt.imshow(1 - conways.data[i], cmap="gray")
 #     plt.show()
-

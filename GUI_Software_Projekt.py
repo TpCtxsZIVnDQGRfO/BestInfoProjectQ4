@@ -5,12 +5,11 @@ from tkinter import *
 from tkinter import messagebox
 from tkinter.filedialog import askopenfilename, asksaveasfilename
 from Zellulare_Automaten_Simulation import *
+from NodeSimulation import *
 from ast import literal_eval
 
 import numpy as np
 import time
-import threading
-
 import matplotlib
 matplotlib.use("TkAgg")
 
@@ -19,12 +18,16 @@ from matplotlib.figure import Figure
 from matplotlib import pyplot as plt
 import matplotlib.animation as animation
 
+from playsound import playsound
+
 
 # Globale Variablen
 data_list = [] # Datenstruktur: [ID, Name der Simulation, Daten Array, Filepath, Frame]
 #  Daten Array: Simulations-Typ, x-Length, y-Length, p0_coordinates, steps, infectionrate, recoveryrate
-toolbox = [-1, -1]
+toolbox = [-1, 0, 0]
+beispiel_created = False
 # current_simulation (-1 keine Simulation ausgewählt), Load-Counter
+standard_name = "Untitled"
 
 
 
@@ -37,11 +40,7 @@ fenster.config(bg='white')
 # Fenstergröße
 fenster.geometry("675x675")
 
-# To-Do-List
-# - weiß werden der p0_coordinates_tf bzw. rot werden
-# - Speicherung der p0_coordinates in schönem Format zum Wiederöffnen
-# - Bug bei Copy-Pasting in Infection-Field
-
+'''Das Frame enthält Ansätze für eine Erweiterung der Simulationsframeeinstellungen in y-Richtung. Jedoch konnten wir das Problem mit der Verzerrung der Pixel vorerst nicht lösen und haben deshalb unsere Zeit erst einmal in andere Features gesteckt.'''
 
 #class Frame Rechteck
 class input_simulationA:
@@ -55,27 +54,30 @@ class input_simulationA:
         self.infection = infection
         self.recovery = recovery
 
+        self.design_preset = get_design_preset()
+
         self.frame = Frame(fenster)
-        self.frame.config(bg='red')
+        self.frame.config(bg=self.design_preset[0])
+        self.start_button_cd_start = 0.0                 # Nötig für einen Cooldown des Start-Buttons
 
     def create_frame(self):
         # Frames
-        grafic_frame = Frame(master=self.frame, bg='green')
+        grafic_frame = Frame(master=self.frame, bg=self.design_preset[1])
         grafic_frame.pack(side=TOP, padx='5', pady='5', fill=BOTH)
 
-        name_frame = Frame(master=self.frame, bg='yellow')
+        name_frame = Frame(master=self.frame, bg=self.design_preset[2])
         name_frame.pack(side='top', padx='5', pady='5', fill=X)
 
-        components_frame = Frame(master=self.frame, bg='green')
+        components_frame = Frame(master=self.frame, bg=self.design_preset[3])
         components_frame.pack(padx='5', pady='5', fill=X)
 
-        label_frame = Frame(master=components_frame, bg='magenta')
+        label_frame = Frame(master=components_frame, bg=self.design_preset[4])
         label_frame.pack(side='left', padx='5', pady='5')
 
-        tf_frame = Frame(master=components_frame, bg='red')
+        tf_frame = Frame(master=components_frame, bg=self.design_preset[5])
         tf_frame.pack(side='right', padx='5', pady='5')
 
-        start_frame = Frame(master=self.frame, bg='blue')
+        start_frame = Frame(master=self.frame, bg=self.design_preset[6])
         start_frame.pack(side='top', padx='5', pady='5', fill=X)
 
 
@@ -90,40 +92,28 @@ class input_simulationA:
         ax.set_xticks([0])
         ax.set_yticks([0])
 
-        # a tk.DrawingArea
+        # eine tk.DrawingArea
         canvas = FigureCanvasTkAgg(fig, master=grafic_frame)
         canvas.get_tk_widget().pack(side=TOP, fill=BOTH, anchor='w')
-        canvas.draw()
-        plt.close()
 
-
-        # Grafik-Update-Funktion: Wird aufgerufen, wenn der Slider bewegt wird
+        # Grafik-Update-Funktion: Wird aufgerufen, wenn die p0_coordinates verändert werden oder die Grafikgröße
         def grafic_change():
             try:
-                data = np.zeros([self.len_x,self.len_x,3]) # Verändert für gleich große Grid-Seiten
+                data = np.zeros([self.len_x,self.len_x,3]) # kann durch Veränderung zu self.len_y an neues Feature angepasst werden
                 data[:,:] = [1,0,0]
                 for i in self.p0_coordinates:
                     data[i[0],i[1]] = [0,1,0]
 
                 im.set_data(data)
-                len_x_tf.config(bg="white")
-                #p0_coordinates_tf.config(bg="white")
+                len_x_tf.config(bg=self.design_preset[7]) # kann durch Hinzufügen von len_y_tf.config(...) an neues Feature angepasst werden
 
             except:
-                len_x_tf.config(bg="red")
-                #p0_coordinates_tf.config(bg="red")
+                len_x_tf.config(bg=self.design_preset[8])
 
             canvas.draw()
 
-        '''# Erstmal nicht in Benutzung
-        def motion(event):
-            x, y = event.x, event.y
-            print([x,y])
+         # Setzt den Cursor in den Textfeldern ans Ende, um einen Bug mit den Prefixes wie "0." bei recovery_tf zu lösen
 
-        fenster.bind('<ButtonRelease-1>', motion)
-        fenster.bind('<Button-1>', motion)
-        '''
-        
         def motion(event):
             len_x_tf.icursor("end")
             len_y_tf.icursor("end")
@@ -131,13 +121,13 @@ class input_simulationA:
             infection_tf.icursor("end")
             recovery_tf.icursor("end")
 
-        
+
         fenster.bind('<Button-1>', motion)
         fenster.bind('<ButtonRelease-1>', motion)
         fenster.bind('<Left>', motion)
         fenster.bind('<Right>', motion)
         fenster.bind('<BackSpace>', motion)
-        
+
 
         # Funktionen zur Einstellung einer maxlength für die Textfelder und Regulierung der erlaubten Zeichen
         def limitSizeX(*args):
@@ -321,9 +311,9 @@ class input_simulationA:
             while(len(value)>0 and value[0]==" "):
                 value = value[1:]
             name_in.set(value)
-            # Wenn kein Inhalt im Eingabefeld ist, soll intern "Untitled" gespeichert werden
+            # Wenn kein Inhalt im Eingabefeld ist, soll intern standard_name gespeichert werden
             if(len(value)==0):
-                value="Untitled"
+                value=standard_name
             self.name = value
 
             if(toolbox[0] == self.ID):
@@ -353,31 +343,47 @@ class input_simulationA:
         name_in = StringVar()
         name_in.trace('w',limitSizeName)
 
-        # Starten der Simulation
+
+
+        # Starten der Simulation und des Ausgabefensters
         def start_button_action():
-            try:
-                # Flow-Matrix
-                flow_m = np.array([[0,1,0],[0,0,2],[0,0,0]])
-                # Ausbreitungsrate
-                infection = np.array([[1,1,1],[1,0,1],[1,1,1]])*self.infection
-                # Erholungsrate
-                recovery = np.array([self.recovery])
-                # Flow-Chart
-                flow_c = [[infection,1],[recovery,1]]
-                # Festlegung der Größe des Boards
-                start = np.zeros([self.len_x,self.len_x,3]) # Verändert für gleich große Grid-Seiten
-                start[:,:] = [1,0,0]
-                # Festlegung der anfänglichen Infizierten
-                for i in self.p0_coordinates:
-                    start[i[0],i[1]] = [0,1,0]
+            # Cooldown für den Button
+            if(time.time()*1000.0 -2000 > self.start_button_cd_start):
+                self.start_button_cd_start = time.time() * 1000.0
+                start_button.config(state = DISABLED)
+                canvas.draw()
+                try:
+                    # Flow-Matrix
+                    flow_m = np.array([[0,1,0],[0,0,2],[0,0,0]])
+                    # Ausbreitungsrate
+                    infection = np.array([[1,1,1],[1,0,1],[1,1,1]])*self.infection
+                    # Erholungsrate
+                    recovery = np.array([self.recovery])
+                    # Flow-Chart
+                    flow_c = [[infection,1],[recovery,1]]
+                    # Festlegung der Größe des Boards
+                    start = np.zeros([self.len_x,self.len_x,3]) # Verändert für gleich große Grid-Seiten
+                    start[:,:] = [1,0,0]
+                    # Festlegung der anfänglichen Infizierten
+                    for i in self.p0_coordinates:
+                        start[i[0],i[1]] = [0,1,0]
 
-                sir = simulation(start, self.steps, flow_m, flow_c)
-                sir.run()
-                sir.generate_images()
-                out = output_simulationA(self.name, self.steps, self.len_x, self.len_y, sir)
+                    sir = simulation(start, self.steps, flow_m, flow_c)
+                    sir.run()
+                    sir.generate_images()
+                    while(time.time()*1000.0 -2000 < self.start_button_cd_start):
+                        pass
+                    start_button.config(state = NORMAL)
+                    canvas.draw()
+                    # Initialisierung Ausgabefenster
+                    out = output_simulationA(self.name, self.steps, self.len_x, self.len_y, sir)
 
-            except:
-                print("Unexpected error:", sys.exc_info()[0])
+                except:
+                    #print("Unexpected error:", sys.exc_info()[0]) # Dient nur dem Error-Handling
+                    pass
+
+
+
 
 
 
@@ -385,7 +391,7 @@ class input_simulationA:
         name_tf = Entry(name_frame, width=50, relief=SOLID, textvariable=name_in, justify='center')
         name_tf.insert(0, self.name)
 
-        len_x_label = Label(label_frame, text="Grid-Length", relief=SOLID, borderwidth = 1, anchor='w', width=30, bg='white') # Verändert für gleich große Grid-Seiten
+        len_x_label = Label(label_frame, text="Grid-Length", relief=SOLID, borderwidth = 1, anchor='w', width=30, bg='white') # Text Veränderung bis Implementation einstellbare y-Länge
         len_y_label = Label(label_frame, text="Grid-Length-y", relief=SOLID, borderwidth = 1, anchor='w', width=30, bg='white')
         p0_coordinates_label = Label(label_frame, text="p0-Coordinates", relief=SOLID, borderwidth = 1, anchor='w', width=30, bg='white')
         steps_label = Label(label_frame, text="Stepnumber", relief=SOLID, borderwidth = 1, anchor='w', width=30, bg='white')
@@ -410,8 +416,8 @@ class input_simulationA:
         # Positionierung der Komponenten
         start_button = Button(start_frame, text="start", command=start_button_action, width=30)
 
-        label_array = [len_x_label, steps_label, infection_label, recovery_label, p0_coordinates_label] # Verändert für gleich große Grid-Seiten
-        tf_array = [len_x_tf, steps_tf, infection_tf, recovery_tf, p0_coordinates_tf] # Verändert für gleich große Grid-Seiten
+        label_array = [len_x_label, steps_label, infection_label, recovery_label, p0_coordinates_label] # Durch hinzufügen von len_y_label bzw. ..._tf an kommendes Feature anpassbar
+        tf_array = [len_x_tf, steps_tf, infection_tf, recovery_tf, p0_coordinates_tf]
 
         name_tf.pack(side=TOP, ipady=5, ipadx=10)
 
@@ -439,14 +445,6 @@ class input_simulationA:
         data_list[pos][2][6] = self.recovery
 
 
-'''
-# Code für eine Beispiel Initialisierung einer Simulation
-
-frame_test = input_simulationA(0, "Nicer Dicer", 200, 400, [[50,50],[51,351]], 150, 0.6, 0.3)
-frame_test.create_frame()
-frame_test.frame.pack(fill=BOTH, expand=True, side=BOTTOM, anchor=S)
-'''
-
 #class Frame Nodes-Simulation
 class input_simulationB:
     # Startbedingungen der Nodes, flowchart, Größe des Canvas, Auflösung der Visualisierung, Farben der Nodes in den verschiedenen Zuständen, Geschwindigkeit der Nodes, Framerate des Videos, Videolänge, Anzahl und Positionen der Barrieren, maximale Entfernung, mit der zwei Nodes noch verbunden sind, Maximalabstand, den Nodes zu ihrem Startpunkt haben können, Visuals der Barrieren und Verbindungen
@@ -454,48 +452,493 @@ class input_simulationB:
         self.ID = ID
         self.name = name
         self.frames = frames
-        
+
         self.node_number = node_number
         self.infected_number = infected_number
         self.node_speed = node_speed
-        
+
         self.hospital_number = hospital_number
         self.hospital_capacity = hospital_capacity
         self.recovery_time = recovery_time
         self.hospital_distance = hospital_distance
-        
+
         self.infection_radius = infection_radius
         self.movement_radius = movement_radius
-        
+
         self.barriers = barriers
-        
+
         self.canvas_x = canvas_x
         self.canvas_y = canvas_y
         self.resolution_x = resolution_x
         self.resolution_y = resolution_y
 
+        self.design_preset = get_design_preset()
+
         self.frame = Frame(fenster)
-        self.frame.config(bg='red')
+        self.frame.config(bg='gray')
 
     def create_frame(self):
         # Frames
-        grafic_frame = Frame(master=self.frame, bg='green')
+        grafic_frame = Frame(master=self.frame, bg=self.design_preset[2])
         grafic_frame.pack(side=TOP, padx='5', pady='5', fill=BOTH)
 
-        name_frame = Frame(master=self.frame, bg='yellow')
+        name_frame = Frame(master=self.frame, bg=self.design_preset[3])
         name_frame.pack(side='top', padx='5', pady='5', fill=X)
 
-        components_frame = Frame(master=self.frame, bg='green')
+        components_frame = Frame(master=self.frame, bg=self.design_preset[4])
         components_frame.pack(padx='5', pady='5', fill=X)
 
-        label_frame = Frame(master=components_frame, bg='magenta')
+        label_frame = Frame(master=components_frame, bg=self.design_preset[5])
         label_frame.pack(side='left', padx='5', pady='5')
 
-        tf_frame = Frame(master=components_frame, bg='red')
+        tf_frame = Frame(master=components_frame, bg=self.design_preset[6])
         tf_frame.pack(side='right', padx='5', pady='5')
 
-        start_frame = Frame(master=self.frame, bg='blue')
+        start_frame = Frame(master=self.frame, bg=self.design_preset[7])
         start_frame.pack(side='top', padx='5', pady='5', fill=X)
+
+        # Funktionen zur Einstellung einer maxlength für die Textfelder und Regulierung der erlaubten Zeichen
+        def limitSizeName(*args):
+            value = name_in.get()
+            # nicht mehr als 20 Zeichen
+            value = value[:20]
+            # löschen aller nicht erlaubten Zeichen
+            i = 0
+            while(i<len(value)):
+                if(value[i].lower() not in "abcdefghijktlmnopqrstuvwxyz _-"):
+                    value=value[:i]+value[i+1:]
+                else:
+                    i+=1
+            # Der Inhalt darf nicht mit einer " " beginnen
+            while(len(value)>0 and value[0]==" "):
+                value = value[1:]
+            name_in.set(value)
+            # Wenn kein Inhalt im Eingabefeld ist, soll intern standard_name gespeichert werden
+            if(len(value)==0):
+                value=standard_name
+            self.name = value
+
+            if(toolbox[0] == self.ID):
+                fenster.title(self.name)
+                data_list[toolbox[0]][4].update_data_list()
+                simulation_menu.entryconfig(toolbox[0], label=data_list[toolbox[0]][4].name)
+
+        def limitSizeFrames(*args):
+            value = frames_in.get()
+            # löschen aller nicht erlaubten Zeichen
+            i = 0
+            while(i<len(value)):
+                if(value[i] not in "0123456789"):
+                    value=value[:i]+value[i+1:]
+                else:
+                    i+=1
+            # Der Inhalt darf nicht mit einer 0 beginnen
+            value = value[:3]
+            # nicht mehr als drei Zeichen
+            while(len(value)>0 and value[0]=="0"):
+                value = value[1:]
+            frames_in.set(value)
+            # Wenn kein Inhalt im Eingabefeld ist, soll intern 10 gespeichert werden
+            if(len(value)==0):
+                value=10
+            self.frames = int(value)
+
+        def limitSizeNodeNumber(*args):
+            value = node_number_in.get()
+            # löschen aller nicht erlaubten Zeichen
+            i = 0
+            while(i<len(value)):
+                if(value[i] not in "0123456789"):
+                    value=value[:i]+value[i+1:]
+                else:
+                    i+=1
+            # Der Inhalt darf nicht mit einer 0 beginnen
+            value = value[:3]
+            # nicht mehr als drei Zeichen
+            while(len(value)>0 and value[0]=="0"):
+                value = value[1:]
+            node_number_in.set(value)
+            # Wenn kein Inhalt im Eingabefeld ist, soll intern 0 gespeichert werden
+            if(len(value)==0):
+                value=0
+            self.node_number = int(value)
+            if(self.node_number < self.infected_number):
+                infected_number_tf.config(bg="red")
+            else:
+                infected_number_tf.config(bg="white")
+
+        def limitSizeInfectedNumber(*args):
+            value = infected_number_in.get()
+            # löschen aller nicht erlaubten Zeichen
+            i = 0
+            while(i<len(value)):
+                if(value[i] not in "0123456789"):
+                    value=value[:i]+value[i+1:]
+                else:
+                    i+=1
+            # Der Inhalt darf nicht mit einer 0 beginnen
+            value = value[:3]
+            # nicht mehr als drei Zeichen
+            while(len(value)>0 and value[0]=="0"):
+                value = value[1:]
+            infected_number_in.set(value)
+            # Wenn kein Inhalt im Eingabefeld ist, soll intern 0 gespeichert werden
+            if(len(value)==0):
+                value=0
+            if(int(value) <= self.node_number):
+                infected_number_tf.config(bg="white")
+            else:
+                infected_number_tf.config(bg="red")
+            self.infected_number = int(value)
+
+        def limitSizeNodeSpeed(*args):
+            value = node_speed_in.get()
+            # löschen aller nicht erlaubten Zeichen
+            i = 0
+            while(i<len(value)):
+                if(value[i] not in "0123456789"):
+                    value=value[:i]+value[i+1:]
+                else:
+                    i+=1
+            # Der Inhalt darf nicht mit einer 0 beginnen
+            value = value[:2]
+            # nicht mehr als 2 Zeichen
+            while(len(value)>0 and value[0]=="0"):
+                value = value[1:]
+            node_speed_in.set(value)
+            # Wenn kein Inhalt im Eingabefeld ist, soll intern 0 gespeichert werden
+            if(len(value)==0):
+                value=0
+            self.node_speed = int(value)
+
+        def limitSizeHospitalNumber(*args):
+            value = hospital_number_in.get()
+            # löschen aller nicht erlaubten Zeichen
+            i = 0
+            while(i<len(value)):
+                if(value[i] not in "0123456789"):
+                    value=value[:i]+value[i+1:]
+                else:
+                    i+=1
+            # Der Inhalt darf nicht mit einer 0 beginnen
+            value = value[:2]
+            # nicht mehr als 2 Zeichen
+            while(len(value)>0 and value[0]=="0"):
+                value = value[1:]
+            hospital_number_in.set(value)
+            # Wenn kein Inhalt im Eingabefeld ist, soll intern 0 gespeichert werden
+            if(len(value)==0):
+                value=10
+            self.hospital_number = int(value)
+
+        def limitSizeHospitalCapacity(*args):
+            value = hospital_capacity_in.get()
+            # löschen aller nicht erlaubten Zeichen
+            i = 0
+            while(i<len(value)):
+                if(value[i] not in "0123456789"):
+                    value=value[:i]+value[i+1:]
+                else:
+                    i+=1
+            # Der Inhalt darf nicht mit einer 0 beginnen
+            value = value[:2]
+            # nicht mehr als 2 Zeichen
+            while(len(value)>0 and value[0]=="0"):
+                value = value[1:]
+            hospital_capacity_in.set(value)
+            # Wenn kein Inhalt im Eingabefeld ist, soll intern 0 gespeichert werden
+            if(len(value)==0):
+                value=0
+            self.hospital_capacity = int(value)
+
+        def limitSizeRecoveryTime(*args):
+            value = recovery_time_in.get()
+            # löschen aller nicht erlaubten Zeichen
+            i = 0
+            while(i<len(value)):
+                if(value[i] not in "0123456789"):
+                    value=value[:i]+value[i+1:]
+                else:
+                    i+=1
+            # Der Inhalt darf nicht mit einer 0 beginnen
+            value = value[:2]
+            # nicht mehr als 2 Zeichen
+            while(len(value)>0 and value[0]=="0"):
+                value = value[1:]
+            recovery_time_in.set(value)
+            # Wenn kein Inhalt im Eingabefeld ist, soll intern 0 gespeichert werden
+            if(len(value)==0):
+                value=10
+            self.recovery_time = int(value)
+
+        def limitSizeHospitalDistance(*args):
+            value = hospital_distance_in.get()
+            # löschen aller nicht erlaubten Zeichen
+            i = 0
+            while(i<len(value)):
+                if(value[i] not in "0123456789"):
+                    value=value[:i]+value[i+1:]
+                else:
+                    i+=1
+            # Der Inhalt darf nicht mit einer 0 beginnen
+            value = value[:3]
+            # nicht mehr als drei Zeichen
+            while(len(value)>0 and value[0]=="0"):
+                value = value[1:]
+            hospital_distance_in.set(value)
+            # Wenn kein Inhalt im Eingabefeld ist, soll intern 10 gespeichert werden
+            if(len(value)==0):
+                value=10
+            self.hospital_distance = int(value)
+
+        def limitSizeInfectionRadius(*args):
+            value = infection_radius_in.get()
+            # löschen aller nicht erlaubten Zeichen
+            i = 0
+            while(i<len(value)):
+                if(value[i] not in "0123456789"):
+                    value=value[:i]+value[i+1:]
+                else:
+                    i+=1
+            # Der Inhalt darf nicht mit einer 0 beginnen
+            value = value[:3]
+            # nicht mehr als drei Zeichen
+            while(len(value)>0 and value[0]=="0"):
+                value = value[1:]
+            infection_radius_in.set(value)
+            # Wenn kein Inhalt im Eingabefeld ist, soll intern 10 gespeichert werden
+            if(len(value)==0):
+                value=10
+            self.infection_radius = int(value)
+
+        def limitSizeMovementRadius(*args):
+            value = movement_radius_in.get()
+            # löschen aller nicht erlaubten Zeichen
+            i = 0
+            while(i<len(value)):
+                if(value[i] not in "0123456789"):
+                    value=value[:i]+value[i+1:]
+                else:
+                    i+=1
+            # Der Inhalt darf nicht mit einer 0 beginnen
+            value = value[:3]
+            # nicht mehr als drei Zeichen
+            while(len(value)>0 and value[0]=="0"):
+                value = value[1:]
+            movement_radius_in.set(value)
+            # Wenn kein Inhalt im Eingabefeld ist, soll intern 10 gespeichert werden
+            if(len(value)==0):
+                value=10
+            self.movement_radius = int(value)
+
+        def limitSizeBarriers(*args):
+            value = barriers_in.get()
+            # löschen aller nicht erlaubten Zeichen
+            i = 0
+            while(i<len(value)):
+                if(value[i] not in "0123456789[],"):
+                    value=value[:i]+value[i+1:]
+                else:
+                    i+=1
+            barriers_in.set(value)
+            # Überprüfung der Eingabe der Koordinaten
+            try:
+                # richtige Klammerung und Kommasetzung
+                s=literal_eval(value)
+                # Koordinatenpaare nicht länger als 4 und Koordinaten innerhalb der Grid-Länge
+                b = [len(i)==4 and i[0]<self.canvas_x and i[1]<self.canvas_y and i[2]<self.canvas_x and i[3]<self.canvas_y for i in s]
+
+                # Einfärbung bei Fehler
+                if(False not in b):
+                    barriers_tf.config(bg="white")
+                    self.barriers = s
+                else:
+                    barriers_tf.config(bg="red")
+            except:
+                barriers_tf.config(bg="red")
+
+        # Initialisierung der Textvariablen und obigen Überprüfungsmethoden
+        name_in = StringVar()
+        name_in.trace('w',limitSizeName)
+
+        frames_in = StringVar()
+        frames_in.trace('w',limitSizeFrames)
+
+        node_number_in = StringVar()
+        node_number_in.trace('w',limitSizeNodeNumber)
+
+        infected_number_in = StringVar()
+        infected_number_in.trace('w',limitSizeInfectedNumber)
+
+        node_speed_in = StringVar()
+        node_speed_in.trace('w',limitSizeNodeSpeed)
+
+        hospital_number_in = StringVar()
+        hospital_number_in.trace('w',limitSizeHospitalNumber)
+
+        hospital_capacity_in = StringVar()
+        hospital_capacity_in.trace('w',limitSizeHospitalCapacity)
+
+        recovery_time_in = StringVar()
+        recovery_time_in.trace('w',limitSizeRecoveryTime)
+
+        hospital_distance_in = StringVar()
+        hospital_distance_in.trace('w',limitSizeHospitalDistance)
+
+        infection_radius_in = StringVar()
+        infection_radius_in.trace('w',limitSizeInfectionRadius)
+
+        movement_radius_in = StringVar()
+        movement_radius_in.trace('w',limitSizeMovementRadius)
+
+        barriers_in = StringVar()
+        barriers_in.trace('w',limitSizeBarriers)
+
+        # Starten der Simulation
+        def start_button_action():
+            try:
+                # Um Bugs mit der Variable der aktuellen Simulation im toolbox-Array und der sichtbaren Simulation bei Lags des Programmes zu vermeiden
+                pos = -1
+                for i in range(len(data_list)):
+                    if(data_list[i][0] == self.ID):
+                        pos = i
+                        break
+                data_list[pos][4].update_data_list()
+
+                # Simulation Initialisieren
+
+
+                flowchart = np.array([[0,0.05,0],[0,0,0.00025],[0,0,0]])
+
+                sim = Simulation([],flowchart, 5, 10, 5, 90)    # Muss noch veränderbar gemacht werden
+
+                sim.frames = data_list[pos][2][1]
+                sim.canvas = [data_list[pos][2][12], data_list[pos][2][13]]
+                sim.resolution = [data_list[pos][2][14], data_list[pos][2][15]]
+
+                sim.addRandomNode(data_list[pos][2][2], [1,0,0])
+                for i in range(data_list[pos][2][3]):               # Anfangsinfizierte
+                    sim.nodes[i].state = [0,1,0]
+
+                sim.speed = data_list[pos][2][4]
+                sim.addRandomKH(data_list[pos][2][5], data_list[pos][2][6])
+
+                sim.Behandlungsdauer = data_list[pos][2][7]
+                sim.KHWeg = data_list[pos][2][8]
+                sim.maxDist = data_list[pos][2][9]
+                sim.movementRadius = data_list[pos][2][10]
+
+                sim.barrierColour = "red"
+                sim.barrierWidth = 2
+                sim.connecColour = "white"
+                sim.connecWidth = 1
+                # Daten in richtige Form bringen wie es das Node-Simulationsskript benötigt
+                for i in data_list[pos][2][11]:
+                    sim.barriers.append([[i[0],i[1]],[i[2],i[3]]])
+
+                # Erstellung der Frames
+                frameArr = []
+                for i in range(sim.frames):
+                    sim.generate_connections()
+                    frameArr.append(np.array(sim.visualComplete()))
+                    sim.run(1)
+                    print(i)
+
+
+                for pic in frameArr: #Rot- und Blaukanal werden getauscht
+                    for i in range(len(pic)):
+                        pic[i][:, [2, 0]] = pic[i][:, [0, 2]]
+
+                Utility.cptv(frameArr,"video.mp4",sim.fps)
+
+                print("Das Video wurde erstellt.")
+
+            except:
+                print("Unexpected error:", sys.exc_info()[0])
+
+        # Komponenten
+        name_tf = Entry(name_frame, width=50, relief=SOLID, textvariable=name_in, justify='center')
+        name_tf.insert(0, self.name)
+
+        frames_label = Label(label_frame, text="Frames", relief=SOLID, borderwidth = 1, anchor='w', width=30, bg='white')
+        node_number_label = Label(label_frame, text="Node number", relief=SOLID, borderwidth = 1, anchor='w', width=30, bg='white')
+        infected_number_label = Label(label_frame, text="Infected number", relief=SOLID, borderwidth = 1, anchor='w', width=30, bg='white')
+        node_speed_label = Label(label_frame, text="Node speed", relief=SOLID, borderwidth = 1, anchor='w', width=30, bg='white')
+        hospital_number_label = Label(label_frame, text="Hospital number", relief=SOLID, borderwidth = 1, anchor='w', width=30, bg='white')
+        hospital_capacity_label = Label(label_frame, text="Hospital capacity", relief=SOLID, borderwidth = 1, anchor='w', width=30, bg='white')
+        recovery_time_label = Label(label_frame, text="Recovery time (in s)", relief=SOLID, borderwidth = 1, anchor='w', width=30, bg='white')
+        hospital_distance_label = Label(label_frame, text="Hospital distance", relief=SOLID, borderwidth = 1, anchor='w', width=30, bg='white')
+        infection_radius_label = Label(label_frame, text="Infection radius", relief=SOLID, borderwidth = 1, anchor='w', width=30, bg='white')
+        movement_radius_label = Label(label_frame, text="Movement radius", relief=SOLID, borderwidth = 1, anchor='w', width=30, bg='white')
+        barriers_label = Label(label_frame, text="Barriers", relief=SOLID, borderwidth = 1, anchor='w', width=30, bg='white')
+
+        frames_tf = Entry(tf_frame, width=35, relief=SOLID, textvariable=frames_in)
+        node_number_tf = Entry(tf_frame, width=35, relief=SOLID, textvariable=node_number_in)
+        infected_number_tf = Entry(tf_frame, width=35, relief=SOLID, textvariable=infected_number_in)
+        node_speed_tf = Entry(tf_frame, width=35, relief=SOLID, textvariable=node_speed_in)
+        hospital_number_tf = Entry(tf_frame, width=35, relief=SOLID, textvariable=hospital_number_in)
+        hospital_capacity_tf = Entry(tf_frame, width=35, relief=SOLID, textvariable=hospital_capacity_in)
+        recovery_time_tf = Entry(tf_frame, width=35, relief=SOLID, textvariable=recovery_time_in)
+        hospital_distance_tf = Entry(tf_frame, width=35, relief=SOLID, textvariable=hospital_distance_in)
+        infection_radius_tf = Entry(tf_frame, width=35, relief=SOLID, textvariable=infection_radius_in)
+        movement_radius_tf = Entry(tf_frame, width=35, relief=SOLID, textvariable=movement_radius_in)
+        barriers_tf = Entry(tf_frame, width=35, relief=SOLID, textvariable=barriers_in)
+
+        # Befüllung der Textfelder mit dem Inhalt der Simulationen
+        frames_tf.insert(0, str(self.frames))
+        node_number_tf.insert(0, str(self.node_number))
+        infected_number_tf.insert(0, str(self.infected_number))
+        node_speed_tf.insert(0, str(self.node_speed))
+        hospital_number_tf.insert(0, str(self.hospital_number))
+        hospital_capacity_tf.insert(0, str(self.hospital_capacity))
+        recovery_time_tf.insert(0, str(self.recovery_time))
+        hospital_distance_tf.insert(0, str(self.hospital_distance))
+        infection_radius_tf.insert(0, str(self.infection_radius))
+        movement_radius_tf.insert(0, str(self.movement_radius))
+        barriers_tf.insert(0, str(self.barriers))
+
+        # Positionierung der Komponenten
+        start_button = Button(start_frame, text="start", command=start_button_action, width=30)
+
+        label_array = [frames_label, node_number_label, infected_number_label, node_speed_label, hospital_number_label, hospital_capacity_label, recovery_time_label, hospital_distance_label, infection_radius_label, movement_radius_label, barriers_label]
+        tf_array = [frames_tf, node_number_tf, infected_number_tf, node_speed_tf, hospital_number_tf, hospital_capacity_tf,recovery_time_tf, hospital_distance_tf, infection_radius_tf, movement_radius_tf, barriers_tf]
+
+        name_tf.pack(side=TOP, ipady=5, ipadx=10)
+
+        for i in range(len(label_array)):
+            label_array[i].pack(side=TOP, ipady=5, ipadx=10)
+
+        for i in range(len(tf_array)):
+            tf_array[i].pack(side=TOP, ipady=5, ipadx=10)
+
+        start_button.pack(ipady=5, ipadx=10)
+
+    # Methode zur Übertragung der veränderten Attribute der Simulation in das data_list-Array
+    def update_data_list(self):
+        pos = -1
+        for i in range(len(data_list)):
+            if(data_list[i][0] == self.ID):
+                pos = i
+                break
+        data_list[pos][1] = self.name
+        data_list[pos][2][1] = self.frames
+        data_list[pos][2][2] = self.node_number
+        if(self.node_number < self.infected_number):    # Damit nur theoretisch funktionierende Simulationen in data_list gespeichert werden
+            data_list[pos][2][3] = self.node_number
+        else:
+            data_list[pos][2][3] = self.infected_number
+        data_list[pos][2][4] = self.node_speed
+        data_list[pos][2][5] = self.hospital_number
+        data_list[pos][2][6] = self.hospital_capacity
+        data_list[pos][2][7] = self.recovery_time
+        data_list[pos][2][8] = self.hospital_distance
+        data_list[pos][2][9] = self.infection_radius
+        data_list[pos][2][10] = self.movement_radius
+        data_list[pos][2][11] = self.barriers
+        data_list[pos][2][12] = self.canvas_x
+        data_list[pos][2][13] = self.canvas_y
+        data_list[pos][2][14] = self.resolution_x
+        data_list[pos][2][15] = self.resolution_y
 
 
 class output_simulationA:
@@ -503,14 +946,16 @@ class output_simulationA:
         self.name = name
         self.steps = steps
         self.len_x = len_x
-        self.len_y = len_y
+        self.len_y = len_y # Bereits initialisiert aber noch nicht in Verwendung bis zur Behebung der oben angesprochenen Verzerrung
         self.sim = sim # Simulation
+
+        self.design_preset = get_design_preset()
 
         # Fenster initialisieren
         out_fenster = Tk()
         out_fenster.title(self.name)
         out_fenster.resizable(0, 0)
-        out_fenster.config(bg='white')
+        out_fenster.config(bg='gray')
 
         # Fenstergröße
         out_fenster.geometry("600x600")
@@ -520,7 +965,7 @@ class output_simulationA:
         grafic_frame = Frame(master=out_fenster, bg='green')
         grafic_frame.pack(padx='5', pady='5', fill=X)
 
-        slider_frame = Frame(master=out_fenster, bg='red')
+        slider_frame = Frame(master=out_fenster, bg='gray')
         slider_frame.pack(side='bottom', padx='5', pady='5', fill=X)
 
         # Grafik
@@ -528,7 +973,7 @@ class output_simulationA:
 
         image = data
         fig = plt.figure(figsize=(5,4))
-        im = plt.imshow(image) # later use a.set_data(new_data)
+        im = plt.imshow(image) # später updatebar mit im.set_data(new_data)
         ax = plt.gca()
         ax.set_xticks([0])
         ax.set_yticks([0])
@@ -536,7 +981,7 @@ class output_simulationA:
         #ax.set_yticklabels([100,100])
 
         plt.suptitle (self.name, fontsize=16)
-        # a tk.DrawingArea
+        # eine tk.DrawingArea
         canvas = FigureCanvasTkAgg(fig, master=grafic_frame)
         canvas.get_tk_widget().pack(fill=BOTH, expand=1)
         canvas.draw()
@@ -551,6 +996,7 @@ class output_simulationA:
 
         # Reset-Button: Führt Simulation ein weiteres Mal aus
         def reset_button_action():
+            disable_elements()
             sim.run()
             sim.generate_images()
             data = sim.images[0]
@@ -558,16 +1004,48 @@ class output_simulationA:
             im.set_data(data)
 
             canvas.draw()
+            enable_elements()
+
+        def auto_button_action():
+            disable_elements()
+            move_slider(10000)
+            enable_elements()
 
         # Komponenten
 
-        time_slider = Scale(slider_frame, from_=0, to=self.steps ,tickinterval=50, orient=HORIZONTAL, length=300, command=grafic_change)
+        time_slider = Scale(slider_frame, from_=0, to=self.steps-1, tickinterval=50, orient=HORIZONTAL, length=300, command=grafic_change)
         time_slider.set(0)
         time_slider.pack(side=TOP, pady=5, padx=10)
 
 
         reset_button = Button(slider_frame, text="reset", command=reset_button_action, width=15)
         reset_button.pack(side=BOTTOM, pady=5, padx=10)
+
+        auto_button = Button(slider_frame, text="auto", command=auto_button_action, width=15)
+        auto_button.pack(side=BOTTOM, pady=5, padx=10)
+
+        def disable_elements(): #deaktiviert die buttons
+            reset_button.config(state = DISABLED)
+            auto_button.config(state = DISABLED)
+            canvas.draw()
+
+
+        def enable_elements():  #aktiviert die buttons
+            reset_button.config(state = NORMAL)
+            auto_button.config(state = NORMAL)
+            canvas.draw()
+
+        def move_slider(t):  #t ist keine genaue Einheit, t gibt die ungefähre Geschwindigkeit an ~ Unterschiede nur an der Größenordnung messbar
+            t0 = time.time()*1000
+            i = time_slider.get()
+            a = 0;
+            while(i < self.steps):
+                if(time.time()*1000 >= t0+(t/self.steps)*a):
+                    time_slider.set(i)
+                    i += 1
+                    a += 1
+                    canvas.draw()
+
 
         # Fenster starten
         out_fenster.mainloop()
@@ -588,14 +1066,15 @@ def create_typ_0_button_action():
     # default Werte
     data =[0,200,200,[[100,100,110,110],[10,10]],300,0.15,0.25]
     # Erstellung des Frames
-    frame_simulation = input_simulationA(toolbox[1],"Untitled",data[1],data[2],data[3],data[4],data[5],data[6])
+    frame_simulation = input_simulationA(toolbox[1],standard_name,data[1],data[2],data[3],data[4],data[5],data[6])
     frame_simulation.create_frame()
+
     # Hinzufügen der Simulation in das data_list-Array
-    data_list.append([toolbox[1]]+["Untitled"]+[data]+[None]+[frame_simulation])
+    data_list.append([toolbox[1]]+[standard_name]+[data]+[None]+[frame_simulation])
 
     id = toolbox[1]
     # Menübar hinzufügen zu Simulation-Menu
-    simulation_menu.add_command(label="Untitled"+str(id), command=lambda: action_simulation(id))
+    simulation_menu.add_command(label=standard_name+str(id), command=lambda: action_simulation(id))
 
     # Wenn mit dieser Simulation die Simulationsanzahl von 4 überschritten wird, d.h. 5 vorhanden sind, dann sollen die Buttons "Create" und "Load" disabled werden
     if(len(data_list) > 4):
@@ -606,16 +1085,16 @@ def create_typ_0_button_action():
 def create_typ_1_button_action():
     toolbox[1] += 1
     # default Werte
-    data =[0,200,200,[[100,100,110,110],[10,10]],300,0.15,0.25]
+    data =[1,30, 400, 5, 30, 3, 5, 2, 300, 50, 500, [[800,100,800,800]], 1600, 900, 1600, 900]
     # Erstellung des Frames
-    frame_simulation = input_simulationB(toolbox[1],"Untitled",data[1],data[2],data[3],data[4],data[5],data[6])
+    frame_simulation = input_simulationB(toolbox[1],standard_name,data[1],data[2],data[3],data[4],data[5],data[6],data[7],data[8],data[9],data[10],data[11],data[12],data[13],data[14],data[15])
     frame_simulation.create_frame()
     # Hinzufügen der Simulation in das data_list-Array
-    data_list.append([toolbox[1]]+["Untitled"]+[data]+[None]+[frame_simulation])
+    data_list.append([toolbox[1]]+[standard_name]+[data]+[None]+[frame_simulation])
 
     id = toolbox[1]
     # Menübar hinzufügen zu Simulation-Menu
-    simulation_menu.add_command(label="Untitled"+str(id), command=lambda: action_simulation(id))
+    simulation_menu.add_command(label=standard_name+str(id), command=lambda: action_simulation(id))
 
     # Wenn mit dieser Simulation die Simulationsanzahl von 4 überschritten wird, d.h. 5 vorhanden sind, dann sollen die Buttons "Create" und "Load" disabled werden
     if(len(data_list) > 4):
@@ -631,32 +1110,49 @@ def load_button_action():
     if not filepath:
         return
     with open(filepath, "r") as input_file:
-        # Inhalt der Text-Datei: Zeilen als Array-Einträge nehmen
-        text = input_file.read()
-        text = text.split('\n')
-        # Hochsetzen des Load-Counters
-        toolbox[1] += 1
-        # Strings aus der Text-Datei in richtige Datentypen umwandeln
-        data =[int(text[1]),int(text[2]),int(text[3]),literal_eval(text[4]),int(text[5]),float(text[6]),float(text[7])]
-        # Wenn das Rechteck-Format bei der Simulation ausgewählt wurde
-        if(data[0] == 0):
-            # Erstellung des Frames
-            frame_simulation = input_simulationA(toolbox[1],text[0],int(text[2]),int(text[3]),literal_eval(text[4]),int(text[5]),float(text[6]),float(text[7]))
+        try:
+            # Inhalt der Text-Datei: Zeilen als Array-Einträge nehmen
+            text = input_file.read()
+            text = text.split('\n')
+            # Hochsetzen des Load-Counters
+            toolbox[1] += 1
+
+            # Wenn das Rechteck-Format bei der Simulation ausgewählt wurde
+            if(int(text[1]) == 0):
+                # Strings aus der Text-Datei in richtige Datentypen umwandeln
+                data =[int(text[1]),int(text[2]),int(text[3]),literal_eval(text[4]),int(text[5]),float(text[6]),float(text[7])]
+                # Erstellung des Frames
+                frame_simulation = input_simulationA(toolbox[1],text[0],int(text[2]),int(text[3]),literal_eval(text[4]),int(text[5]),float(text[6]),float(text[7]))
+            # Wenn eine Node-Simulation geladen wird
+            elif(int(text[1]) == 1):
+                # Strings aus der Text-Datei in richtige Datentypen umwandeln
+                data =[int(text[1]),int(text[2]),int(text[3]),int(text[4]),int(text[5]),int(text[6]),int(text[7]),int(text[8]),int(text[9]),int(text[10]),int(text[11]),literal_eval(text[12]),int(text[13]),int(text[14]),int(text[15]),int(text[16])]
+                # Erstellung des Frames
+                frame_simulation = input_simulationB(toolbox[1],text[0],int(text[2]),int(text[3]),int(text[4]),int(text[5]),int(text[6]),int(text[7]),int(text[8]),int(text[9]),int(text[10]),int(text[11]),literal_eval(text[12]),int(text[13]),int(text[14]),int(text[15]),int(text[16]))
+
             frame_simulation.create_frame()
-        # Hinzufügen der Simulation in das data_list-Array
-        data_list.append([toolbox[1]]+[text[0]]+[data]+[filepath]+[frame_simulation])
 
-        id = toolbox[1]
-        # Menübar hinzufügen zu Simulation-Menu
-        simulation_menu.add_command(label=text[0], command=lambda: action_simulation(id))
+            # Hinzufügen der Simulation in das data_list-Array
+            data_list.append([toolbox[1]]+[text[0]]+[data]+[filepath]+[frame_simulation])
 
-        # Wenn mit dieser Simulation die Simulationsanzahl von 4 überschritten wird, d.h. 5 vorhanden sind, dann sollen die Buttons "Create" und "Load" disabled werden
-        if(len(data_list) > 4):
-            datei_menu.entryconfig(1, state=DISABLED)
-            datei_menu.entryconfig(0, state=DISABLED)
+            id = toolbox[1]
+            # Menübar hinzufügen zu Simulation-Menu
+            simulation_menu.add_command(label=text[0], command=lambda: action_simulation(id))
+
+            # Wenn mit dieser Simulation die Simulationsanzahl von 4 überschritten wird, d.h. 5 vorhanden sind, dann sollen die Buttons "Create" und "Load" disabled werden
+            if(len(data_list) > 4):
+                datei_menu.entryconfig(1, state=DISABLED)
+                datei_menu.entryconfig(0, state=DISABLED)
+        # Fehler Pop-up
+        except:
+            m_text = "    ************************\n    Geladene Datei ist fehlerhaft\n    ************************"
+            messagebox.showinfo(message=m_text, title = "Error")
 
 # Auswerfen der aktuell ausgewählten Simulation aus dem Editor
 def dismiss_button_action():
+    # Soundeffekt
+    playsound('Soundeffects/Blop.mp3')
+
     # Button aus der Menubar entfernen
     simulation_menu.delete(toolbox[0])
     # Angezeigter Frame löschen
@@ -669,7 +1165,8 @@ def dismiss_button_action():
     datei_menu.entryconfig(1, state=NORMAL)
     datei_menu.entryconfig(0, state=NORMAL)
 
-# Ändert Fenster-Titel und Frames: -1 ist kein Frame ausgewählt
+
+# Ändert Fenster-Titel und Frames, -1: kein Frame ist ausgewählt
 def set_simulation(num):
     # Zurücksetzen des aktuellen Frames, außer wenn keiner ausgewählt ist
     if(num > -1 and toolbox[0] != -1):
@@ -718,7 +1215,16 @@ def save_button_action():
         # Falls gerade erst ein Dateipfad ausgewählt wurde, soll dieser hinterlegt werden, um beim nächsten Speichern nicht die Datei neu zu speichern, sondern die Datei einfach zu updaten
         data_list[toolbox[0]][3] = str(filepath)
 
-# Function, welche ausgeführt wird, wenn man in der Menubar eine Simulation auswählt
+# Ansatz für eine potentielle Tutorial Simulation um mit den Einstellungen vertraut zu werden
+def beispiel_button_action():  #TODO
+    if(beispiel_created == False):
+        frame_simulation = input_simulationA(0, "Nicer Dicer", 200, 400, [[50,50],[51,351]], 150, 0.6, 0.3)
+        data = [0, 200, 400, [[50,50],[51,351]], 150, 0.6, 0.3]
+        frame_simulation.create_frame()
+        data_list.append([0]+["Nicer Dicer"]+[data]+[None]+[frame_simulation])
+    action_simulation(0)
+
+
 def action_simulation(id):
     # finden der Simulation im data-list-Array
     for i in range(len(data_list)):
@@ -727,6 +1233,38 @@ def action_simulation(id):
             break
 
     set_simulation(pos)
+
+def sim_color_settings_action():
+    pass
+
+
+
+light_mode_preset = ['#F1EEC7','#F1EEC7','#F1EEC7','#F1EEC7','#F1EEC7','red','#F1EEC7','white','red']
+dark_mode_preset = ['grey','black','grey','grey','grey','red','#F1EEC7','grey','red']
+
+def get_design_preset():
+    switcher = {
+        0: light_mode_preset,
+        1: dark_mode_preset
+    }
+    return switcher.get(toolbox[2])
+
+def set_light_mode_action():
+    toolbox[2] = 0
+    update_design_preset()
+
+def set_dark_mode_action():
+    toolbox[2] = 1
+    update_design_preset()
+
+def update_design_preset():
+    for i in range(0,toolbox[1]):
+        data_list[toolbox[0]][4].frame.pack_forget()
+        if data_list[i][2][0] == 0:
+            frame_simulation = input_simulationA(data_list[i][0], data_list[i][1], data_list[i][4].len_x, data_list[i][4].len_y, data_list[i][4].p0_coordinates,data_list[i][4].steps,data_list[i][4].infection,data_list[i][4].recovery)
+            frame_simulation.create_frame()
+            data_list[i][4] = frame_simulation
+    set_simulation(toolbox[0])
 
 # Schließen des Programmes
 def exit_action():
@@ -753,6 +1291,15 @@ create_menu.add_command(label="Typ 0", command=create_typ_0_button_action)
 create_menu.add_command(label="Typ 1", command=create_typ_1_button_action)
 datei_menu.add_command(label="Load", command=load_button_action)
 datei_menu.add_separator() # Fügt eine Trennlinie hinzu
+# Untermenü "Settings" erstelle
+settings_menu = Menu(datei_menu, tearoff=0)
+datei_menu.add_cascade(label="Settings", menu=settings_menu)
+settings_menu.add_command(label="Simulationcolors", command=sim_color_settings_action)
+design_settings_menu = Menu(settings_menu, tearoff=0)
+settings_menu.add_cascade(label="Design-Settings", menu=design_settings_menu)
+design_settings_menu.add_command(label="Light-Mode", command=set_light_mode_action)
+design_settings_menu.add_command(label="Dark-Mode", command=set_dark_mode_action)
+datei_menu.add_separator() # Fügt eine Trennlinie hinzu
 datei_menu.add_command(label="Exit", command=exit_action)
 
 # Menü "Bearbeiten"
@@ -761,7 +1308,7 @@ bearbeiten_menu.add_command(label="Save", command=save_button_action, state=DISA
 
 # Menü "Help"
 help_menu.add_command(label="Info", command=action_get_info_dialog)
-help_menu.add_command(label="Beispiel") # noch ohne Funktion
+help_menu.add_command(label="Beispiel", command=beispiel_button_action)
 
 # Menüs der Menüleiste hinzufügen
 menuleiste.add_cascade(label="Datei", menu=datei_menu)
@@ -777,4 +1324,4 @@ fenster.config(menu=menuleiste)
 fenster.mainloop()
 
 
-print(data_list) # Für Testzwecke
+#print(data_list) # Für Testzwecke
