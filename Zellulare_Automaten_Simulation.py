@@ -152,7 +152,7 @@ class simulation:
             colors[i][2] = 1 - i * 1 / self.data.shape[3]
         return colors
 
-    def generate_images(self, colors):
+    def generate_images(self, colors = [[1,0,0],[0,1,0],[0,0,1]]):
         """
         Generiert die Images mit gegebenen Bildern
         :param colors: RGB Werte für jeden Zustand in iterable
@@ -253,9 +253,28 @@ Eine Zelle wird immun mit einer gewissen Wahrscheinlichkeit"""
 # sir = simulation(start, 300, flow_m, flow_c)
 # sir.run()
 # sir.generate_images(colors = [[1,0,0],[0,1,0],[0,0,1]])
-# for i in range(0,300,50):
-#     plt.imshow(sir.images[i])
-#     plt.show()
+# # for i in range(0,300,50):
+# #     plt.imshow(sir.images[i])
+# #     plt.show()
+# for i in range(3):
+#     liste = [0,0,0]
+#     liste[i] = 1
+#     image = sir.images[75]*liste
+#     plt.imshow(sir.images[75]*liste)
+#     plt.savefig("Images/channel"+str(i)+".png")
+#     plt.close()
+#     image = froll2d(sir.images[75], [25,25])*liste
+#     plt.imshow(image)
+#     plt.savefig("Images/channel_rolled" + str(i) + ".png")
+#     plt.close()
+#     size = sir.images[0].shape
+#     random = np.random.rand(size[0],size[1])
+#     plt.imshow(random)
+#     plt.savefig("Images/randomnois.png")
+#     plt.close()
+#     plt.imshow(sir.images[76]*liste)
+#     plt.savefig("Images/next_image" + str(i)+".png")
+#     plt.close()
 # sir.generate_graph()
 """ ----------------------------------------------Beispiel Initialisierung 2------------------------------------------------------------------
 Beispiel Simulation für eine Simulation mit mehr Zuständen (ohne praktische Anwendung)"""

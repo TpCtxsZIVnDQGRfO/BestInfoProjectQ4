@@ -5,7 +5,7 @@ import math
 from PIL import Image
 from PIL import ImageDraw
 from PIL import ImageFont
-
+import numba
 import cv2
 #import glob
 import os
@@ -84,7 +84,7 @@ class Simulation:
 
     def distance(self,Knoten1, Knoten2): #berechnet den Abstand der beiden Knoten
         return math.sqrt((Knoten1.k[0]-Knoten2.k[0])**2+(Knoten1.k[1]-Knoten2.k[1])**2)
-    
+
     def generate_connections(self): #aktualisiert die Verbindungsdaten in den Nodes
         self.links = []
         for i in range(len(self.nodes)):
@@ -168,7 +168,7 @@ class Simulation:
         if self.KH != []:
             return self.visualNodes(self.visualBarriers(self.visualKH(self.visualLinks())))
         return self.visualNodes(self.visualBarriers(self.visualLinks()))
-        
+
     def run(self,steps): #die eigentliche Simulation;
 
 #########
