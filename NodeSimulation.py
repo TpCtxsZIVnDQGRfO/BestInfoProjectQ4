@@ -5,7 +5,6 @@ import math
 from PIL import Image
 from PIL import ImageDraw
 from PIL import ImageFont
-import numba
 import cv2
 #import glob
 import os
