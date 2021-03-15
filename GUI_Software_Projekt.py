@@ -35,7 +35,7 @@ standard_name = "Untitled"
 fenster = Tk()
 fenster.title("Der Simulator-Simulator")
 fenster.resizable(0, 0)
-fenster.config(bg='white')
+fenster.config(bg="white")
 
 # Fenstergröße
 fenster.geometry("675x675")
@@ -1240,7 +1240,7 @@ def sim_color_settings_action():
 
 
 light_mode_preset = ['#F1EEC7','#F1EEC7','#F1EEC7','#F1EEC7','#F1EEC7','red','#F1EEC7','white','red']
-dark_mode_preset = ['grey','black','grey','grey','grey','red','#F1EEC7','grey','red']
+dark_mode_preset = ['grey','grey','grey','grey','white','red','grey','white','red']
 
 def get_design_preset():
     switcher = {
