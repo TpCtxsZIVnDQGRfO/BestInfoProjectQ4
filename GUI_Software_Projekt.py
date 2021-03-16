@@ -26,7 +26,7 @@ data_list = [] # Datenstruktur: [ID, Name der Simulation, Daten Array, Filepath,
 #  Daten Array: Simulations-Typ, x-Length, y-Length, p0_coordinates, steps, infectionrate, recoveryrate
 toolbox = [-1, 0, 0]
 beispiel_created = False
-# current_simulation (-1 keine Simulation ausgewählt), Load-Counter
+# current_simulation (-1 keine Simulation ausgewählt), Load-Counter, ausgewähltes design-preset
 standard_name = "Untitled"
 
 
@@ -53,31 +53,28 @@ class input_simulationA:
         self.steps = steps
         self.infection = infection
         self.recovery = recovery
-
-        self.design_preset = get_design_preset()
-
         self.frame = Frame(fenster)
-        self.frame.config(bg=self.design_preset[0])
+        self.frame.config(bg=get_design_preset()[0])
         self.start_button_cd_start = 0.0                 # Nötig für einen Cooldown des Start-Buttons
 
     def create_frame(self):
         # Frames
-        grafic_frame = Frame(master=self.frame, bg=self.design_preset[1])
+        grafic_frame = Frame(master=self.frame, bg=get_design_preset()[1])
         grafic_frame.pack(side=TOP, padx='5', pady='5', fill=BOTH)
 
-        name_frame = Frame(master=self.frame, bg=self.design_preset[2])
+        name_frame = Frame(master=self.frame, bg=get_design_preset()[2])
         name_frame.pack(side='top', padx='5', pady='5', fill=X)
 
-        components_frame = Frame(master=self.frame, bg=self.design_preset[3])
+        components_frame = Frame(master=self.frame, bg=get_design_preset()[3])
         components_frame.pack(padx='5', pady='5', fill=X)
 
-        label_frame = Frame(master=components_frame, bg=self.design_preset[4])
+        label_frame = Frame(master=components_frame, bg=get_design_preset()[4])
         label_frame.pack(side='left', padx='5', pady='5')
 
-        tf_frame = Frame(master=components_frame, bg=self.design_preset[5])
+        tf_frame = Frame(master=components_frame, bg=get_design_preset()[5])
         tf_frame.pack(side='right', padx='5', pady='5')
 
-        start_frame = Frame(master=self.frame, bg=self.design_preset[6])
+        start_frame = Frame(master=self.frame, bg=get_design_preset()[6])
         start_frame.pack(side='top', padx='5', pady='5', fill=X)
 
 
@@ -101,14 +98,14 @@ class input_simulationA:
             try:
                 data = np.zeros([self.len_x,self.len_x,3]) # kann durch Veränderung zu self.len_y an neues Feature angepasst werden
                 data[:,:] = [1,0,0]
-                for i in self.p0_coordinates:
+                for i in transform_p0_coordinates():
                     data[i[0],i[1]] = [0,1,0]
 
                 im.set_data(data)
-                len_x_tf.config(bg=self.design_preset[7]) # kann durch Hinzufügen von len_y_tf.config(...) an neues Feature angepasst werden
+                len_x_tf.config(bg=get_design_preset()[7]) # kann durch Hinzufügen von len_y_tf.config(...) an neues Feature angepasst werden
 
             except:
-                len_x_tf.config(bg=self.design_preset[8])
+                len_x_tf.config(bg=get_design_preset()[8])
 
             canvas.draw()
 
@@ -223,6 +220,29 @@ class input_simulationA:
                     p0_coordinates_tf.config(bg="white")
                     new_coord = []
                     for i in range(len(b)):
+                        new_coord.append(s[i])
+                    self.p0_coordinates = new_coord
+                else:
+                    p0_coordinates_tf.config(bg="red")
+            except:
+                p0_coordinates_tf.config(bg="red")
+
+            grafic_change()
+
+        # da die p0-coords an mehreren Stellen in Form einzelner Paare vorliegen muss werden Paare wie [6,4,5,10] hier aufgespalten
+        def transform_p0_coordinates():
+            value = p0_coordinates_in.get()
+            try:
+                # richtige Klammerung und Kommasetzung
+                s=literal_eval(value)
+                # Koordinatenpaare nicht länger als 2 und Koordinaten innerhalb der Grid-Länge
+                b = [len(i)==2 for i in s]
+                c = [(len(i)==4 or len(i)==2) for i in s]
+                new_coord = []
+                if(False not in b):
+                    new_coord = s
+                elif(False not in c):
+                    for i in range(len(b)):
                         if(b[i]==True):
                             new_coord.append(s[i])
                         elif(b[i]==False and c[i]==True):
@@ -231,13 +251,9 @@ class input_simulationA:
                             for j in range(min(w),max(w)+1):
                                 for k in range(min(v),max(v)+1):
                                     new_coord.append([j,k])
-                    self.p0_coordinates = new_coord
-                else:
-                    p0_coordinates_tf.config(bg="red")
+                return new_coord
             except:
-                p0_coordinates_tf.config(bg="red")
-
-            grafic_change()
+                pass
 
         def limitSizeSteps(*args):
             value = steps_in.get()
@@ -365,7 +381,7 @@ class input_simulationA:
                     start = np.zeros([self.len_x,self.len_x,3]) # Verändert für gleich große Grid-Seiten
                     start[:,:] = [1,0,0]
                     # Festlegung der anfänglichen Infizierten
-                    for i in self.p0_coordinates:
+                    for i in transform_p0_coordinates():
                         start[i[0],i[1]] = [0,1,0]
 
                     sir = simulation(start, self.steps, flow_m, flow_c)
@@ -381,6 +397,7 @@ class input_simulationA:
                 except:
                     #print("Unexpected error:", sys.exc_info()[0]) # Dient nur dem Error-Handling
                     pass
+            start_button.config(state = NORMAL) # Sollte die creation einer Simulation fehlschlagen (bspw. wegen fehlerhafter Parameter) wird der Button direkt wieder aktiviert
 
 
 
@@ -472,29 +489,27 @@ class input_simulationB:
         self.resolution_x = resolution_x
         self.resolution_y = resolution_y
 
-        self.design_preset = get_design_preset()
-
         self.frame = Frame(fenster)
-        self.frame.config(bg='gray')
+        self.frame.config(bg=get_design_preset()[0])
 
     def create_frame(self):
         # Frames
-        grafic_frame = Frame(master=self.frame, bg=self.design_preset[2])
+        grafic_frame = Frame(master=self.frame, bg=get_design_preset()[2])
         grafic_frame.pack(side=TOP, padx='5', pady='5', fill=BOTH)
 
-        name_frame = Frame(master=self.frame, bg=self.design_preset[3])
+        name_frame = Frame(master=self.frame, bg=get_design_preset()[3])
         name_frame.pack(side='top', padx='5', pady='5', fill=X)
 
-        components_frame = Frame(master=self.frame, bg=self.design_preset[4])
+        components_frame = Frame(master=self.frame, bg=get_design_preset()[4])
         components_frame.pack(padx='5', pady='5', fill=X)
 
-        label_frame = Frame(master=components_frame, bg=self.design_preset[5])
+        label_frame = Frame(master=components_frame, bg=get_design_preset()[5])
         label_frame.pack(side='left', padx='5', pady='5')
 
-        tf_frame = Frame(master=components_frame, bg=self.design_preset[6])
+        tf_frame = Frame(master=components_frame, bg=get_design_preset()[6])
         tf_frame.pack(side='right', padx='5', pady='5')
 
-        start_frame = Frame(master=self.frame, bg=self.design_preset[7])
+        start_frame = Frame(master=self.frame, bg=get_design_preset()[7])
         start_frame.pack(side='top', padx='5', pady='5', fill=X)
 
         # Funktionen zur Einstellung einer maxlength für die Textfelder und Regulierung der erlaubten Zeichen
@@ -949,23 +964,21 @@ class output_simulationA:
         self.len_y = len_y # Bereits initialisiert aber noch nicht in Verwendung bis zur Behebung der oben angesprochenen Verzerrung
         self.sim = sim # Simulation
 
-        self.design_preset = get_design_preset()
-
         # Fenster initialisieren
         out_fenster = Tk()
         out_fenster.title(self.name)
         out_fenster.resizable(0, 0)
-        out_fenster.config(bg='gray')
+        out_fenster.config(bg=get_design_preset()[0])
 
         # Fenstergröße
         out_fenster.geometry("600x600")
 
         # Frames
 
-        grafic_frame = Frame(master=out_fenster, bg='green')
+        grafic_frame = Frame(master=out_fenster, bg='white')
         grafic_frame.pack(padx='5', pady='5', fill=X)
 
-        slider_frame = Frame(master=out_fenster, bg='gray')
+        slider_frame = Frame(master=out_fenster, bg=get_design_preset()[0])
         slider_frame.pack(side='bottom', padx='5', pady='5', fill=X)
 
         # Grafik
@@ -1234,12 +1247,7 @@ def action_simulation(id):
 
     set_simulation(pos)
 
-def sim_color_settings_action():
-    pass
-
-
-
-light_mode_preset = ['#F1EEC7','#F1EEC7','#F1EEC7','#F1EEC7','#F1EEC7','red','#F1EEC7','white','red']
+light_mode_preset = ['#F1EEC7','#F1EEC7','#F1EEC7','#F1EEC7','#F1EEC7','red','#F1EEC7','white','red']   # zwei Presets mit Farben, die meisten spielen keine große Rolle - bloß die ersten zwei sind ausschlaggebend
 dark_mode_preset = ['grey','grey','grey','grey','white','red','grey','white','red']
 
 def get_design_preset():
@@ -1250,14 +1258,20 @@ def get_design_preset():
     return switcher.get(toolbox[2])
 
 def set_light_mode_action():
+    for i in range(design_settings_menu.index("end")+1):
+        design_settings_menu.entryconfig(i, state=NORMAL)
     toolbox[2] = 0
     update_design_preset()
+    design_settings_menu.entryconfig(toolbox[2], state=DISABLED)
 
 def set_dark_mode_action():
+    for i in range(design_settings_menu.index("end")+1):
+        design_settings_menu.entryconfig(i, state=NORMAL)
     toolbox[2] = 1
     update_design_preset()
+    design_settings_menu.entryconfig(toolbox[2], state=DISABLED)
 
-def update_design_preset():
+def update_design_preset(): # hiermit wird das aktuelle und alle anderen Frames mit dem eingestellten preset geladen - es mag nicht notwendig erscheinen, aber wenn keine neue input_simulationA gemacht wird gibt get_design_preset() das Preset zum Zeitpunkt der Erschaffung wieder
     for i in range(0,toolbox[1]):
         data_list[toolbox[0]][4].frame.pack_forget()
         if data_list[i][2][0] == 0:
@@ -1294,10 +1308,9 @@ datei_menu.add_separator() # Fügt eine Trennlinie hinzu
 # Untermenü "Settings" erstelle
 settings_menu = Menu(datei_menu, tearoff=0)
 datei_menu.add_cascade(label="Settings", menu=settings_menu)
-settings_menu.add_command(label="Simulationcolors", command=sim_color_settings_action)
 design_settings_menu = Menu(settings_menu, tearoff=0)
 settings_menu.add_cascade(label="Design-Settings", menu=design_settings_menu)
-design_settings_menu.add_command(label="Light-Mode", command=set_light_mode_action)
+design_settings_menu.add_command(label="Light-Mode", command=set_light_mode_action, state=DISABLED)
 design_settings_menu.add_command(label="Dark-Mode", command=set_dark_mode_action)
 datei_menu.add_separator() # Fügt eine Trennlinie hinzu
 datei_menu.add_command(label="Exit", command=exit_action)
