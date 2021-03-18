@@ -46,7 +46,10 @@ class Simulation:
         self.KHWeg = 300 #Maxweg, den ein Patient zum KH auf sich nimmt
         self.bAbstand = self.KHDistance*0.75 #Radius des Kreises, in dem sich Patienten um das Krankenhaus aufstellen
 
-
+        self.hotspots = [] #speichert Koordinaten der Hotspots
+        self.hotspotRadius = 30 #Größe der Hotspots
+        self.hsSpeedMod = 0.5 #wird mit speed multipliziert
+        self.hsColor = (151,159,51) #Farbe der Hotspots
 
         for i in range(flowchart.shape[0]): #shape ist die Größe (-> [0] Länge in x-Richtung)
             for j in range(flowchart.shape[1]):
@@ -67,6 +70,10 @@ class Simulation:
             else:
                 id = self.nodes[-1].ID+1
             self.nodes.append(Knoten(id,k,state,[],None))
+
+    def addRandomHotspot(self,amount):
+        for i in range(amount):
+            self.hotspots.append([random.randint(0,self.canvas[0]),random.randint(0,self.canvas[1])])
 
     def addRandomKH(self,amount,maxKapa): #erstellt x neue Krankenhäuser an zufälligen Koordinaten
         w = self.KHWidth
@@ -106,11 +113,22 @@ class Simulation:
                             self.nodes[i].connec.append([self.nodes[j+i],distance])
                             self.nodes[j+i].connec.append([self.nodes[i],distance])
                             self.links.append([self.nodes[j+i],self.nodes[i],distance]) #damit wir sie in visualLinks einfach durchgehen können
-                            
-    def visualLinks(self): #malt nur die Verbindungslinien auf einen leeren grauen Canvas
+
+    def visualHotspots(self):
         r = self.nodeRadius
         dis = [self.resolution[0]/self.canvas[0],self.resolution[1]/self.canvas[1]] #distortion
         image = Image.new('RGB', (round((self.canvas[0]+2*r)*dis[0]),round((self.canvas[1]+2*r)*dis[1])),color = (41, 49, 51)) #Anthrazit
+        draw = ImageDraw.Draw(image)
+        c = (151,159,51)
+        hsr = self.hotspotRadius
+        for hs in self.hotspots:
+            draw.ellipse(((hs[0]+r)*dis[0]-hsr, (hs[1]+r)*dis[1]-hsr, (hs[0]+r)*dis[0]+hsr, (hs[1]+r)*dis[1]+hsr), fill = c, outline =c)
+        return image
+                            
+    def visualLinks(self, background): #malt nur die Verbindungslinien auf einen leeren grauen Canvas
+        r = self.nodeRadius
+        dis = [self.resolution[0]/self.canvas[0],self.resolution[1]/self.canvas[1]] #distortion
+        image = background
         #image = Image.open("gradient-grey-wallpaper.jpg")
         #image.thumbnail((round((self.canvas[0]+2*r)*dis[0]),round((self.canvas[1]+2*r)*dis[1])))
         fill = self.connecColour
@@ -165,8 +183,8 @@ class Simulation:
 
     def visualComplete(self): #erstellt das ganze Bild mit allen Teilen
         if self.KH != []:
-            return self.visualNodes(self.visualBarriers(self.visualKH(self.visualLinks())))
-        return self.visualNodes(self.visualBarriers(self.visualLinks()))
+            return self.visualNodes(self.visualBarriers(self.visualKH(self.visualLinks(self.visualHotspots()))))
+        return self.visualNodes(self.visualBarriers(self.visualLinks(self.visualHotspots())))
 
     def run(self,steps): #die eigentliche Simulation;
 
@@ -260,7 +278,12 @@ class Simulation:
                             node.beugungsRate = random.randint(5,20)        #keine Lust, das jetzt zu erklären
                             node.modVec = [-node.moveVec[1],node.moveVec[0]] #Modifizierungsvektor steht senkrecht auf dem Bewegungsvektor
                         node.moveVec = [node.moveVec[0]+node.modVec[0]/20*node.beugungsRate,node.moveVec[1]+node.modVec[1]/20*node.beugungsRate]
-                        fuCoords = [node.k[0]+node.moveVec[0]/10*self.speed,node.k[1]+node.moveVec[1]/10*self.speed] #die Koordinaten, an denen die Node als nächtes wäre
+                        realSpeed = self.speed
+                        for hs in self.hotspots:
+                            if Utility.coordDistance(node.k,hs)<self.hotspotRadius: #wenn im Hotspot
+                                realSpeed = self.speed*self.hsSpeedMod
+                                break
+                        fuCoords = [node.k[0]+node.moveVec[0]/10*realSpeed,node.k[1]+node.moveVec[1]/10*realSpeed] #die Koordinaten, an denen die Node als nächtes wäre
                         wegVersperrt = False #ob eine Barriere den Weg versperrt
                         for barrier in self.barriers:
                             k1 = node.k
@@ -393,11 +416,12 @@ class Utility(): #allerlei nützliche Funktionen
 if __name__ == "__main__":
     flowchart = np.array([[0,0.05,0],[0,0,0.00025],[0,0,0]])
     sim = Simulation([],flowchart, 5, 10, 5, 90)
-    sim.frames = 30
+    sim.frames = 50
     sim.canvas = [1600,900]
     sim.resolution = [1600,900]
     sim.addRandomNode(400,[1,0,0])
     sim.addRandomKH(3,5)
+    sim.addRandomHotspot(3)
     sim.maxDist = 50
     sim.movementRadius = 500
     #sim.speed = 100
@@ -408,6 +432,8 @@ if __name__ == "__main__":
     sim.connecWidth = 1
 
     sim.barriers.append([[800,100],[800,800]])
+
+    print(sim.hotspots)
 
     for i in range(5):
         sim.nodes[i].state = [0,1,0] #die ersten fünf Nodes sind infiziert
