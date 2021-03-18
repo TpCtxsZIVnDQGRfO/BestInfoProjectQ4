@@ -186,6 +186,87 @@ class Simulation:
             return self.visualNodes(self.visualBarriers(self.visualKH(self.visualLinks(self.visualHotspots()))))
         return self.visualNodes(self.visualBarriers(self.visualLinks(self.visualHotspots())))
 
+    def path(self,node):
+        waypoints = []  #Alle Wegpunkte (Start, Ziel und Barrierenbegrenzungen)
+        waypoints.append(node.k)
+        for i in range(len(self.barriers)):
+            waypoints.append(self.barriers[i][0]) #Start der Barriere
+            waypoints.append(self.barriers[i][1]) #Ende der Barriere
+        waypoints.append(node.KH.k)
+
+        barrierlines = [] #Dies sind alle Strecken, die von Barrieren belegt werden
+        for i in range (len(self.barriers)):
+            barrierlines.append([self.barriers[i][0],self.barriers[i][1],[self.barriers[i][0][0]-self.barriers[i][1][0],self.barriers[i][0][1]-self.barriers[i][1][1]]]) #Strecken der Barrieren: [Startpos,Endpos,Richtungsvektor]
+
+        pathlength = [] #Zweidimensionale Matrix der direkten Verbindungslänge von einem Punkt zum nächsten. Bei keiner Verbindung (durch Barriere) oder derselbe Knoten ist die Verbindungslänge gleich 0 und wird nicht genutzt
+        for i in range (len(waypoints)): #Kombination aller Verbindungen ausführen
+            pathlength.append([])
+            for j in range (len(waypoints)):
+                if not (j == i or i <= j): #nur die eine Hälfte der Verbindungsmatrix, die andere wird später gespiegelt (Strecke  von A nach B ist dieselbe wie von B nach A)
+                    intersection = False #besagt, ob es einen Schnittpunkt gibt (für spätere Zeile)
+                    path = [waypoints[i],waypoints[j],[waypoints[i][0]-waypoints[j][0],waypoints[i][1]-waypoints[j][1]]] #Der überprüfte Weg
+                    for k in range (len(barrierlines)): #Überprüfung der Schneidung mit jeder Barriere
+                        if not (path[0] == barrierlines[k][0] or path[0] == barrierlines[k][1] or path[1] == barrierlines[k][0] or path[1] == barrierlines[k][1]): #Sonderfall gleiche Postition mit einem Barrierenende (else weiter unten)
+                            if not path[2][0] == barrierlines[k][2][0] and not path[2][1] == barrierlines[k][2][1]: #Sonderfall der gleichen Richtungen, hier weder x noch y gleich. Sonst würde im Nenner (in der nächsten Zeile) Null stehen.
+                                intersection_point = [(barrierlines[k][0][0]-path[0][0])/(path[2][0]-barrierlines[k][2][0])*path[2][0]+path[0][0],(barrierlines[k][0][1]-path[0][1])/(path[2][1]-barrierlines[k][2][1])*path[2][1]+path[0][1]] #Berechnung des Schnittpunktes mithilfe von den Punkt- und Richtungsvektoren der Strecke und Barriere
+                            else:
+                                if not path[2][0] == 0 and not path[2][1] == 0: #wenn kein Wert der Richtungsvektoren gleich Null, so kann dieser für die Rechnung skaliert werden
+                                    if path[2][0] == barrierlines[k][2][0]: #x ist gleich
+                                        if path[2][1] >= barrierlines[k][2][1]: #wenn y des Weges größer gleich y der Barriere (Richtungsvektoren), kann Problemlos der Wert für den Weg vergrößert werden, ohne dass im Zähler für die y-Koordinate Null steht
+                                            intersection_point = [(barrierlines[k][0][0]-path[0][0])/(path[2][0]*2-barrierlines[k][2][0])*path[2][0]*2+path[0][0],(barrierlines[k][0][1]-path[0][1])/(path[2][1]*2-barrierlines[k][2][1])*path[2][1]*2+path[0][1]]
+                                        else: #Halbieren falls y(Weg) kleiner y(Barriere)
+                                            intersection_point = [(barrierlines[k][0][0]-path[0][0])/(path[2][0]*0.5-barrierlines[k][2][0])*path[2][0]*0.5+path[0][0],(barrierlines[k][0][1]-path[0][1])/(path[2][1]*0.5-barrierlines[k][2][1])*path[2][1]*0.5+path[0][1]]
+                                    else: #y ist gleich
+                                        if path[2][0] >= barrierlines[k][2][0]: #selbes Spiel wie oben, nur mit dem x-Wert
+                                            intersection_point = [(barrierlines[k][0][0]-path[0][0])/(path[2][0]*2-barrierlines[k][2][0])*path[2][0]*2+path[0][0],(barrierlines[k][0][1]-path[0][1])/(path[2][1]*2-barrierlines[k][2][1])*path[2][1]*2+path[0][1]]
+                                        else:
+                                            intersection_point = [(barrierlines[k][0][0]-path[0][0])/(path[2][0]*0.5-barrierlines[k][2][0])*path[2][0]*0.5+path[0][0],(barrierlines[k][0][1]-path[0][1])/(path[2][1]*0.5-barrierlines[k][2][1])*path[2][1]*0.5+path[0][1]]
+    
+                                else: #hier zeigt der Richtungsvektor des Pfades und der Barriere in dieselbe Richtung und einer der Werte des Richtungsvektors ist gleich Nul
+                                    if (path[2][0] == 0 and path[2][1]-barrierlines[k][0][1] == 0 and not (max(path[0][1],path[1][1]) <= min(barrierlines[k][0][1],barrierlines[k][1][1]) and min(path[0][1],path[1][1]) >= max(barrierlines[k][0][1],barrierlines[k][1][1])) or (path[2][1] == 0 and path[2][0]-barrierlines[k][0][0] == 0 and not (max(path[0][0],path[1][0]) <= min(barrierlines[k][0][0],barrierlines[k][1][0]) and min(path[0][0],path[1][0]) >= max(barrierlines[k][0][0],barrierlines[k][1][0])))):
+                                        intersection = True                         #oben: Überprüfung, ob einer der Werte der Richtungsvektoren gleich Null und der andere Wert der Punkte nicht so liegen, dass beide Strecken sich nicht überlagern. Prüfung für x und y in einer Zeile, halt oder-Verknüpft
+                                        break
+                            if abs(path[0][0]-path[1][0]) >= abs(path[0][0]-intersection_point[0]) and abs(path[0][0]-path[1][0]) >= abs(path[1][0]-intersection_point[0]) and abs(path[0][1]-path[1][1]) >= abs(path[0][1]-intersection_point[1]) and abs(path[0][1]-path[1][1]) >= abs(path[1][1]-intersection_point[1]):
+                                intersection = True                                 #oben: Überprüfung, ob der Punkt auch auf den Vektoren liegen. Der Abstand beider Endpunkte muss dafür kleiner gleich dem Abstand beider Endpunkte sein
+                                break
+                        else:
+                            lengthPath = np.sqrt(path[2][0] ** 2 + path[2][1] ** 2) #Länge des Weges
+                            lengthBarrier = np.sqrt(barrierlines[k][2][0] ** 2 + barrierlines[k][2][1] ** 2)
+                            if (path[2][0]/lengthPath == barrierlines[k][2][0]/lengthBarrier and path[2][1]/lengthPath == barrierlines[k][2][1]/lengthBarrier and (path[0] == barrierlines[k][0] or path[1] == barrierlines[k][1])) or (path[2][0]/lengthPath == barrierlines[k][2][0]/lengthBarrier * (-1) and path[2][1]/lengthPath == barrierlines[k][2][1]/lengthBarrier * (-1) and (path[0] == barrierlines[k][1] or path[1] == barrierlines[k][0])):
+                                intersection = True                                 #bei gleichen normierten Richtungsvektoren (oder gespiegelt) liegen die Strecken aufeinander, wenn die gleichen Punkte aufeinander liegen (Start-Start oder Ende-Ende) bzw. umgekehrt bei gespiegeltem Vektor
+                                break
+                    if intersection:
+                        pathlength[i].append(0) #Bei einem vorhandenem Schnittpunkt ist der Abstand gleich Null und wird somit nicht genutzt.
+                    else:
+                        pathlength[i].append(np.sqrt((waypoints[i][0]-waypoints[j][0]) ** 2 +(waypoints[i][1]-waypoints[j][1]) ** 2)) #sonst wird die Länge hinzugefügt
+                    pathlength[j][i] = pathlength[i][j] # Gegenüberliegend, von [i][j] --> [j][i] projezieren
+                else:
+                    pathlength[i].append(0) #zuindest vorerst, da hier der gespiegelte Wert in der Matrix noxh nicht berechnet wurde
+
+        visited = [True] #Besuchte Punkte auf dem Weg, erster (Start) ist aktuelle Position. Damit es einen Abbruch gibt, wenn nichts mehr besucht werden kann und sich der Weg doppeln würde.
+        for i in range (len(waypoints)-1): #alle anderen noch nicht besucht
+            visited.append(False)
+        way = Simulation.find_way(0,pathlength,visited) #der Weg wird rekursiv berechnet
+
+        return waypoints[way[1][1]] #hier ist nur noch der erste Wegpunkt wichtig, der nun angesteuert wird.
+
+
+    def find_way(position,pathlength,visited): #rekursive Berechnung des genauen Weges
+        if not pathlength[position][len(visited)-1] == 0: #wenn es von der aktuellen Postion einen direkten Weg zum Ziel gibt (letzte Position), ist diese die schnellste, da der Weg gerade ist.
+            return [pathlength[position][len(visited)-1],[position,len(visited)-1]]
+    
+        else:
+            visited[position] = True #Dieser punkt wurde jetzt besucht
+            way = [0,[]] #Weg von hier noch unbekannt
+            for i in range (len(visited)): #für alle Punkte werden besuche überprüft
+                if not visited[i] and pathlength[position][i] > 0: #nur wenn der Punkt noch nicht besucht und der Weg möglich ist (Länge größer Null)
+                    new_way = Simulation.find_way(i,pathlength,visited) #Rekursion: ab hier wird der Weg
+                    new_way[0] = new_way[0] + pathlength[position][i]
+                    if (way[0] == 0 and new_way[0] > 0) or (new_way[0] < way[0] and new_way[0] > 0): #noch kein Weg vorhanden oder jetzt gerade schnelleren Weg gefunden
+                        way = new_way
+                        way[1].insert(0,position) #aktuelle Position wird vorher besucht
+            return way
+
     def run(self,steps): #die eigentliche Simulation;
 
 #########
@@ -234,7 +315,8 @@ class Simulation:
 
                     #Bewegung zum Krankenhaus
                     if node.KHState == [0,1,0,0]:
-                        vec = [node.KH.k[0]-node.k[0],node.KH.k[1]-node.k[1]]
+                        toPosition = self.path(node)
+                        vec = [toPosition[0]-node.k[0],toPosition[1]-node.k[1]]
                         norm = math.sqrt(vec[0]**2+vec[1]**2)
                         vec = [vec[0]/norm,vec[1]/norm] #Bewegungsvektor normieren
                         if norm >= self.bAbstand+0.1*3*self.speed: #wenn die Node noch weit entfernt ist
